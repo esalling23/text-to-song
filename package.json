@@ -1,27 +1,39 @@
 {
-  "name": "text-to-song",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "react": "^18",
-    "react-dom": "^18",
-    "next": "14.1.4"
-  },
-  "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "autoprefixer": "^10.0.1",
-    "postcss": "^8",
-    "tailwindcss": "^3.3.0",
-    "eslint": "^8",
-    "eslint-config-next": "14.1.4"
-  }
+	"name": "text-to-song",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "nodemon server.ts",
+		"build": "next build",
+		"start": "NODE_ENV=production nodemon server.ts",
+		"lint": "next lint"
+	},
+	"dependencies": {
+		"@prisma/client": "^5.12.1",
+		"@reduxjs/toolkit": "^2.2.3",
+		"crypto": "^1.0.1",
+		"next": "14.1.4",
+		"react": "^18",
+		"react-combine-reducers": "^1.1.1",
+		"react-dom": "^18",
+		"react-icons": "^5.0.1",
+		"react-redux": "^9.1.1",
+		"socket.io": "^4.7.5",
+		"socket.io-client": "^4.7.5",
+		"ts-node": "^10.9.2",
+		"use-debounce": "^10.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20",
+		"@types/react": "^18",
+		"@types/react-dom": "^18",
+		"autoprefixer": "^10.0.1",
+		"eslint": "^8",
+		"eslint-config-next": "14.1.4",
+		"nodemon": "^3.1.0",
+		"postcss": "^8",
+		"prisma": "^5.12.1",
+		"tailwindcss": "^3.3.0",
+		"typescript": "^5"
+	}
 }
