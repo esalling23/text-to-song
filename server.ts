@@ -2,16 +2,19 @@ import { createServer } from "node:http"
 import next from "next"
 import { Server } from 'socket.io'
 import crypto from 'crypto'
+import express from 'express'
+import http from 'http'
 
 import { SOCKET_EVENTS } from './socket'
 import prisma from './prisma'
+import bodyParser from "body-parser"
 
 const dev = process.env.NODE_ENV !== "production"
 const hostname = "localhost"
 const port = 3000
 
-const app = next({ dev, hostname, port })
-const handler = app.getRequestHandler()
+const nextApp = next({ dev, hostname, port })
+const handler = nextApp.getRequestHandler()
 
 const getRoomName = (id: string) => `room-${id}`
 const generateRoomCode = (length = 4) => {
@@ -29,10 +32,11 @@ const generateRoomCode = (length = 4) => {
 	return letters
 }
 
-app.prepare().then(() => {
-	const httpServer = createServer(handler)
+nextApp.prepare().then(() => {
+	const app = express()
+	const server = http.createServer(app)
 
-	const io = new Server(httpServer)
+	const io = new Server(server)
 
 	const getRoomState = (room: string) => {
 		const usersInRoom = io.sockets.adapter.rooms.get(room);
@@ -42,11 +46,14 @@ app.prepare().then(() => {
 		}
 	}
 
+	app.use(bodyParser.json())
+
 	io.on("connection", (socket) => {
 		console.log("connected to socket")
 
 		socket.on(SOCKET_EVENTS.CREATE_GAME, async () => {
 			// code will be used to join this room
+			
 			const roomCode = generateRoomCode();
 			console.log("created game room", roomCode)
 			const room = getRoomName(roomCode)
@@ -109,12 +116,47 @@ app.prepare().then(() => {
 			
 			console.log(updatedGame, player)
 
+			socket.emit(SOCKET_EVENTS.JOIN_SUCCESS, player);
+
 			io.to(room).emit(SOCKET_EVENTS.PLAYER_JOINED_GAME, updatedGame)
 		})
 	})
 
-	httpServer
-		.once("error", err => {
+	app.post('/update-player-name', async (req: any, res: any) => {
+		console.log('update player name route', req.body)
+		const player = await prisma.player.update({
+			where: {
+				id: req.body.playerId
+			},
+			data: {
+				displayName: req.body.name
+			}
+		});
+
+		console.log('player updated', player)
+
+		const game = await prisma.game.findFirst({
+			where: {
+				players: {
+					some: { id: player.id }
+				}
+			},
+			include: { players: true }
+		})
+
+		if (game) {
+			io.to(game.groupSocketId).emit(SOCKET_EVENTS.PLAYERS_UPDATED, game)
+		}
+
+		console.log(game)
+
+		res.send({ success: true, data: player })
+	})
+
+	app.all('*', (req: any, res: any) => handler(req, res))
+
+	server
+		.once("error", (err: string) => {
 			console.error(err)
 			process.exit(1)
 		})
