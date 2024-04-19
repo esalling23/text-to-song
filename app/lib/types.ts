@@ -11,8 +11,11 @@ export interface SearchResult {
 	trackName: string;
 }
 
-export interface CreateGameData {
-	groupSocketId: string;
+export interface PlayerData {
+	gameId: string;
+	id: string;
+	displayName: string;
+	gameCode?: string;
 }
 
 export interface RoomData {
