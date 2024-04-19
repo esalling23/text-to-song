@@ -1,0 +1,22 @@
+.player-icon {
+	width: 100px;
+	height: 100px;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+}
+
+.player-image {
+	border-radius: 50%;
+	width: 60%;
+	height: 60%;
+	background: blue;
+	border-width: 2px;
+	border-color: red;
+}
+
+.player-name {
+	background: white;
+}
