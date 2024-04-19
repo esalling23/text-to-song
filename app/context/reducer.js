@@ -7,6 +7,10 @@ export const initialState = {
 		roomId: null,
 		playersInRoom: [],
 	},
+	player: {
+		id: null,
+		displayName: null,
+	},
   screen: {
     current: null,
   },
@@ -33,6 +37,23 @@ const socketReducer = (state, action) => {
   }
 };
 
+const playerReducer = (state, action) => {
+  switch (action.type) {
+    case ACTION_TYPE.SET_PLAYER_ID:
+      return {
+        ...state,
+        id: action.payload,
+      };
+    case ACTION_TYPE.SET_PLAYER_NAME:
+      return {
+        ...state,
+        displayName: action.payload,
+      };
+    default:
+      return state;
+  }
+};
+
 const screenReducer = (state, action) => {
   switch (action.type) {
     case ACTION_TYPE.SET_SCREEN:
@@ -47,6 +68,7 @@ const screenReducer = (state, action) => {
 
 const [combinedReducer, combinedState] = combineReducers({
   screen: [screenReducer, initialState.screen],
+  player: [playerReducer, initialState.player],
   socket: [socketReducer, initialState.socket],
 });
 
