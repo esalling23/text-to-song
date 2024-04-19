@@ -5,6 +5,7 @@ export const initialState = {
 	socket: {
 		isConnected: false,
 		roomId: null,
+		gameCode: null,
 		playersInRoom: [],
 	},
 	player: {
@@ -22,7 +23,8 @@ const socketReducer = (state, action) => {
     case ACTION_TYPE.SET_ROOM: {
       return {
         ...state,
-        roomId: action.payload,
+        roomId: action.payload.id,
+				gameCode: action.payload.code,
 				isConnected: !!action.payload
       };
 		}

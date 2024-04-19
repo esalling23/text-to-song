@@ -5,10 +5,11 @@ export const ACTION_TYPE = {
 	SET_PLAYER_NAME: 'SET_PLAYER_NAME',
 };
 
-export const setGameRoom = (room) => ({
+export const setGameRoom = (id, code) => ({
   type: ACTION_TYPE.SET_ROOM,
-  payload: room,
+  payload: { id, code },
 });
+
 export const setPlayers = (players) => ({
   type: ACTION_TYPE.SET_PLAYERS,
   payload: players,

@@ -1,4 +1,7 @@
-export const getGameRoom = (state) => state.socket.roomId;
+export const getGameRoom = (state) => ({ 
+	roomId: state.socket.roomId, 
+	gameCode: state.socket.gameCode
+});
 
 export const getPlayersInRoom = (state) => state.socket.playersInRoom;
 
