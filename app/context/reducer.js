@@ -3,6 +3,7 @@ import { ACTION_TYPE } from './actions';
 
 export const initialState = {
 	socket: {
+		id: null,
 		isConnected: false,
 		roomId: null,
 		gameCode: null,
@@ -20,6 +21,12 @@ export const initialState = {
 const socketReducer = (state, action) => {
 	console.log(state, action)
   switch (action.type) {
+    case ACTION_TYPE.SET_SOCKET: {
+      return {
+        ...state,
+        id: action.payload,
+      };
+		}
     case ACTION_TYPE.SET_ROOM: {
       return {
         ...state,

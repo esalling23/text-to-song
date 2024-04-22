@@ -3,6 +3,8 @@ export const getGameRoom = (state) => ({
 	gameCode: state.socket.gameCode
 });
 
+export const getSocketId = (state) => state.socket.id;
+
 export const getPlayersInRoom = (state) => state.socket.playersInRoom;
 
 export const getPlayerId = (state) => state.player.id;
