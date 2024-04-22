@@ -3,12 +3,13 @@
 
 import { useGameStateCtx, withGameContext } from "@/context";
 import { socket, SOCKET_EVENTS } from "../../../socket";
-import { useEffect } from "react";
-import { getGameRoom, getPlayerId, getPlayersInRoom } from "@/context/selectors";
+import { FormEvent, useCallback, useEffect } from "react";
+import { getGameRoom, getPlayerId, getPlayersInRoom, getSocketId } from "@/context/selectors";
 import useSockets from "@/hooks/useSockets";
 import { PlayerData, RoomData } from "@/lib/types";
 import { setGameRoom, setPlayerId, setPlayerName } from "@/context/actions";
-import { updatePlayer } from "@/api/player";
+import { updatePlayer } from "@/lib/api/player";
+import { joinGame } from "@/lib/api/game";
 
 interface RoomJoinFormData extends FormData {
 	roomId: String;
@@ -18,28 +19,23 @@ const PlayPage = () => {
 	const { gameDispatch, gameState } = useGameStateCtx();
 	const { roomId } = getGameRoom(gameState);
 	const playerId = getPlayerId(gameState);
+	const socketId = getSocketId(gameState);
 
-	const { isConnected, transport } = useSockets();
-	
-	// console.log(gameState)
-  useEffect(() => {
-		function onGameJoined(data: PlayerData) {
-			gameDispatch(setGameRoom(data.gameId))
-			gameDispatch(setPlayerId(data.id))
-			gameDispatch(setPlayerName(data.displayName))
-		}
+	const _ = useSockets();
 
-		socket.on(SOCKET_EVENTS.JOIN_SUCCESS, onGameJoined)
+	const onGameJoined = useCallback((data: PlayerData) => {
+		console.log(data)
+		gameDispatch(setGameRoom(data.gameId))
+		gameDispatch(setPlayerId(data.id))
+		gameDispatch(setPlayerName(data.displayName))
+	}, [gameDispatch])
 
-    return () => {
-      socket.off(SOCKET_EVENTS.JOIN_SUCCESS, onGameJoined);
-    };
-  }, [gameDispatch]);
-
-
-	if (gameState.socket.roomId == null) {
+	if (roomId == null) {
 		return (
-			<JoinForm />
+			<JoinForm 
+				socketId={socketId}
+				onGameJoined={onGameJoined}
+			/>
 		)
 	}
 
@@ -82,28 +78,44 @@ const NameForm = ({ playerId }: NameFormProps) => (
 	</form>
 )
 
-const JoinForm = () => (
-	<form onSubmit={(e) => {
-		e.preventDefault();
+interface JoinFormPropTypes { 
+	socketId: string; 
+	onGameJoined: any;
+}
+
+const JoinForm = ({
+	socketId,
+	onGameJoined,
+}: JoinFormPropTypes) => {
+	const onSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 		const target = e.target as typeof e.target & {
 			gameCode: { value: string };
 		};
 		console.log(target.gameCode.value)
-
-		socket.emit(SOCKET_EVENTS.JOIN_GAME, { room: target.gameCode.value })
-	}}>
-		<label>
-			Enter Room Code: 
-			<input
-				type="text"
-				name="gameCode"
-				required
-				className="text-black"
-			/>
-		</label>
-		<p>No Game Code? Start a game first to get a code.</p>
-	</form>
-)
+		
+    joinGame(socketId, target.gameCode.value)
+			.then(data => {
+				console.log(data);
+				onGameJoined(data.player)
+			})
+			.catch(console.error);
+  }, [socketId, onGameJoined]);
+	return (
+		<form onSubmit={onSubmit}>
+			<label>
+				Enter Room Code: 
+				<input
+					type="text"
+					name="gameCode"
+					required
+					className="text-black"
+				/>
+			</label>
+			<p>No Game Code? Start a game first to get a code.</p>
+		</form>
+	)
+}
 
 
 export default withGameContext(PlayPage);

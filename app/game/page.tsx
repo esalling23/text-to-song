@@ -2,16 +2,16 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { socket, SOCKET_EVENTS } from "../../socket";
 import { useGameStateCtx, withGameContext } from "@/context";
-import { getGameRoom, getPlayersInRoom } from '@/context/selectors'
+import { getGameRoom, getPlayersInRoom, getSocketId } from '@/context/selectors'
 import { setGameRoom, setPlayers } from "@/context/actions";
 import { PlayerData, RoomData } from "@/lib/types";
 import useSockets from "@/hooks/useSockets";
 import { Player } from "@prisma/client";
 import PlayerIcon from "../../components/game/PlayerIcon";
-import { updateGameData } from "@/lib/serverActions";
+import { createGame } from "@/lib/api/game";
 
 
 const Game = () => {
@@ -20,41 +20,49 @@ const Game = () => {
 	const { isConnected, transport } = useSockets();
 
 	const { roomId, gameCode } = getGameRoom(gameState);
+	const socketId = getSocketId(gameState);
 	const playersInRoom = getPlayersInRoom(gameState);
+
+
+	const onGameUpdated = useCallback((data: RoomData) => {
+		console.log(`Game Updated -- Room ID: ${data.id}`)
+		gameDispatch(setGameRoom(data.id, data.gameCode))
+		gameDispatch(setPlayers(data.players || []))
+	}, [gameDispatch])
 
 	// console.log(gameState)
   useEffect(() => {
-		function onGameUpdated(data: RoomData) {
-			console.log(`Game Updated -- Room ID: ${data.id}`)
-			gameDispatch(setGameRoom(data.id, data.gameCode))
-			gameDispatch(setPlayers(data.players || []))
+
+		function onGameRefresh(data: RoomData) {
+			onGameUpdated(data)
 		}
 
-		function onGameRefresh() {
-			// updateGameData(gameId);
-		}
-
-		socket.on(SOCKET_EVENTS.GAME_CREATED, onGameUpdated)
-		socket.on(SOCKET_EVENTS.PLAYER_JOINED_GAME, onGameUpdated)
-		socket.on(SOCKET_EVENTS.PLAYERS_UPDATED, onGameUpdated)
+		socket.on(SOCKET_EVENTS.PLAYER_JOINED_GAME, onGameRefresh)
+		socket.on(SOCKET_EVENTS.PLAYERS_UPDATED, onGameRefresh)
 		
     return () => {
-			socket.off(SOCKET_EVENTS.GAME_CREATED, onGameUpdated);
-      socket.off(SOCKET_EVENTS.PLAYER_JOINED_GAME, onGameUpdated);
-			socket.off(SOCKET_EVENTS.PLAYERS_UPDATED, onGameUpdated)
+      socket.off(SOCKET_EVENTS.PLAYER_JOINED_GAME, onGameRefresh);
+			socket.off(SOCKET_EVENTS.PLAYERS_UPDATED, onGameRefresh)
     };
-  }, [gameDispatch]);
+  }, [onGameUpdated]);
 
-	const handleCreateGame = () => {
-		socket.emit(SOCKET_EVENTS.CREATE_GAME)		
-	}
+	const handleCreateGame = useCallback(() => {
+		// socket.emit(SOCKET_EVENTS.CREATE_GAME)
+		console.log(socketId)
+		createGame(socketId)
+			.then(data => {
+				console.log(data)
+				onGameUpdated(data.game);
+			})
+			.catch(console.error)
+	}, [socketId, onGameUpdated])
 
   return (
     <div>
       <p>Status: { isConnected ? "connected" : "disconnected" }</p>
       <p>Transport: { transport }</p>
 
-			<button onClick={handleCreateGame}>Create Game</button>
+			{isConnected && <button onClick={handleCreateGame}>Create Game</button>}
 
 			{gameCode && (
 				<>
