@@ -1,4 +1,4 @@
-import fetcher from '@/lib/fetcher'
+import { fetcher } from '@/lib/fetchHelpers'
 
 const baseURL = 'https://lrclib.net/api'
 const searchEndpoint = 'search'

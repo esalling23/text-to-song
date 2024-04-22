@@ -1,13 +1,8 @@
-import fetcher from '@/lib/fetcher'
+import { poster } from '@/lib/fetchHelpers'
 
 const baseURL = 'http://localhost:3000'
 
-export const updatePlayer = (playerId, name) => {
-	return fetcher(`/player/update-name`, {
-		method: 'post',
-		headers: {
-      "Content-Type": "application/json",
-    },
-		body: JSON.stringify({ playerId, name })
-	})
-}
+export const updatePlayer = (playerId, name) => poster(
+	'/player/update-name', 
+	{ playerId, name }
+)
