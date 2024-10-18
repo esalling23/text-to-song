@@ -8,6 +8,7 @@ import http from 'http'
 import prisma from './prisma'
 import { SOCKET_EVENTS } from './socket'
 import bodyParser from "body-parser"
+import cookieParser from 'cookie-parser';
 import { updatePlayerName, createGame, joinGame, startGame, roundReplayClip, roundGuess, getGame, getAllGames, killGame, updateGameSocket } from "./server/routes"
 import requestLogger from "./server/requestLogger"
 import errorHandler from "./server/errorHandler"
@@ -29,12 +30,34 @@ nextApp.prepare().then(() => {
 	})
 
 	app.use(bodyParser.json())
+	app.use(cookieParser())
 	app.use(requestLogger)
 
 	app.set('io', io)
 
-	io.on("connection", (socket: any) => {
+	io.on("connection", async (socket: any) => {
 		console.log("connected to socket", socket.id)
+
+		const gameIdFromCookie = socket.handshake.headers.cookie?.gameId;
+
+		if (gameIdFromCookie) {
+			// Attempt to rejoin the game
+			try {
+				const game = await prisma.game.findUnique({ where: { id: gameIdFromCookie } });
+				if (game && !game.isCompleted) {
+					// Game is active, rejoin the user
+					socket.join(game.groupSocketId);
+					// ... (rest of the rejoin logic)
+				} else {
+					// Game is inactive, clear the cookie
+					socket.emit('clearCookie', 'gameId');
+				}
+			} catch (error) {
+				console.error('Error rejoining game:', error);
+				// Handle error, potentially clear the cookie
+				socket.emit('clearCookie', 'gameId');
+			}
+		}
 
 		socket.emit(SOCKET_EVENTS.CONNECTED, socket.id);
 
