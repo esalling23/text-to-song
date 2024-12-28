@@ -8,13 +8,18 @@ export const socket = io();
 export const SOCKET_EVENTS = {
 	CONNECTED: 'connected',
 	ERROR: 'socketError',
+	REFRESH_GAME: 'refreshGame',
 	CREATE_GAME: 'createGame',
-	GAME_CREATED: 'gameCreated',
 	JOIN_GAME: 'joinGame',
-	JOIN_SUCCESS: 'joinSuccess',
+	START_GAME: 'startGame',
+	ROUND_GUESS: 'roundGuess',
 	PLAYER_JOINED_GAME: 'playerJoinedGame',
 	UPDATE_PLAYER_NAME: 'updatePlayerName',
-	PLAYERS_UPDATED: 'playersUpdated'
+	PLAYERS_UPDATED: 'playersUpdated',
+	REPLAY_CLIP: 'replayClip',
+	STOP_CLIP: 'stopClip',
+	COMPLETE_ROUND: 'completRound',
+	COMPLETE_GAME: 'completeGame'
 }
 
 export const getSocketFromRequest = (req: Request) => {

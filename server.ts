@@ -9,7 +9,7 @@ import prisma from './prisma'
 import { SOCKET_EVENTS } from './socket'
 import bodyParser from "body-parser"
 import cookieParser from 'cookie-parser';
-import { updatePlayerName, createGame, joinGame, startGame, roundReplayClip, roundGuess, getGame, getAllGames, killGame, updateGameSocket } from "./server/routes"
+import { updatePlayerName, createGame, joinGame, startGame, roundReplayClip, roundGuess, getGame, getAllGames, killGame, updateGameSocket, roundComplete } from "./server/routes"
 import requestLogger from "./server/requestLogger"
 import errorHandler from "./server/errorHandler"
 import { gameNotFound } from "./server/customError"
@@ -129,7 +129,9 @@ nextApp.prepare().then(() => {
 	app.post('/api/game/:gameId/start', startGame)
 
 	app.post('/api/game/:gameId/round/replay', roundReplayClip)
-	app.patch('/api/game/:gameId/round/guess', roundGuess)
+	app.post('/api/game/:gameId/round/guess', roundGuess)
+
+	app.post('/api/game/:gameId/round/complete', roundComplete)
 	
 	app.all('*', (req: any, res: any) => handler(req, res))
 	
