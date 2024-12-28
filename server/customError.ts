@@ -1,6 +1,6 @@
 type ErrorName = 
-	| 'GameCreationFailed'
-	| 'GameNotFound';
+	| 'Error'
+	| 'GameError';
 
 type StatusCode = 
 	| 400;
@@ -30,21 +30,21 @@ export class CustomError extends Error {
 	} 
 }
 
-export const makeError = (name: ErrorName, status: StatusCode, message: string) => new CustomError({
-	name: 'GameCreationFailed',
+export const makeError = (name: ErrorName = 'Error', status: StatusCode, message: string) => new CustomError({
+	name,
 	message,
 	// cause,
 	status: 400
 })
 
-export const gameCreationFailed = (message: string) => makeError(
-	'GameCreationFailed',
-	400,
-	message
-)
+export const gameCreationFailed = (message: string) => gameError(`Game Creation Failed${message ? `: ${message}` : ''}`)
 
-export const gameNotFound = (message: string) => makeError(
-	'GameNotFound',
+export const gameNotFound = () => gameError('Game Not Found')
+export const playerNotInGame = () => gameError('Player Not in Game')
+export const playerAlreadyGuessed = () => gameError('Player Already Guessed This Round')
+
+export const gameError = (message: string) => makeError(
+	'GameError',
 	400,
 	message
 )

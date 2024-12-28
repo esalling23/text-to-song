@@ -1,11 +1,12 @@
 
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { CustomError } from './customError';
 
 // an error handling middleware that will run anytime one of the route
 // handlers calls `next`, in other words, when an error gets thrown in one of
 // the promise chains
-const errorHandler = function (err: CustomError, _req: Request, res: Response) {
+// `NextFunction` is required for proper error catching
+const errorHandler = function (err: CustomError, _req: Request, res: Response, _next: NextFunction) {
   // LOG ERRORS
 
   // don't log errors in a test environment
