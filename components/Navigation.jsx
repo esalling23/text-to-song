@@ -20,11 +20,11 @@ export const Navigation = () => {
           {/* <Image src="/logo.png" alt="Family Guy" width={70} height={50} /> */}
         </Link>
         <Link
-          href="/quiz"
+          href="/game"
           className="flex items-center justify-center gap-1 px-5 font-semibold text-black transition-colors bg-green-500 rounded-md duration-600 hover:bg-green-600"
         >
           <TbArrowBigRightFilled className="text-lg" />
-          Take a Quiz
+          Play a game
         </Link>
       </Container>
     </div>
