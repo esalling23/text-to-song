@@ -1,9 +1,11 @@
-export const fetcher = (...args) => fetch(...args).then((res) => res.json());
+import axios from "axios";
 
-export const poster = (url, body) => fetcher(url, {
+export const fetcher = (url, args) => axios({ url, ...args })
+	
+export const poster = (url, data) => fetcher(url, {
 	method: 'post',
 	headers: {
 		"Content-Type": "application/json",
 	},
-	body: JSON.stringify(body)
+	data
 })
