@@ -2,10 +2,10 @@ import combineReducers from 'react-combine-reducers';
 import { ACTION_TYPE } from './actions';
 
 export const initialState = {
-	socket: {
-		id: null,
+	room: {
+		socketId: null,
 		isConnected: false,
-		roomId: null,
+		gameId: null,
 		gameCode: null,
 		playersInRoom: [],
 	},
@@ -18,13 +18,15 @@ export const initialState = {
   },
 };
 
-const socketReducer = (state, action) => {
-	console.log(state, action)
+const roomReducer = (state, action) => {
+	console.log(action)
   switch (action.type) {
     case ACTION_TYPE.SET_SOCKET: {
       return {
         ...state,
-        id: action.payload,
+        socketId: action.payload,
+      };
+		}
       };
 		}
     case ACTION_TYPE.SET_ROOM: {

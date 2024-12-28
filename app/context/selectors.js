@@ -1,14 +1,14 @@
+
+// Room 
 export const getGameRoom = (state) => ({ 
-	roomId: state.socket.roomId, 
-	gameCode: state.socket.gameCode
+	gameId: state.room.gameId, 
+	gameCode: state.room.gameCode
 });
+export const getSocketId = (state) => state.room.socketId;
+export const getPlayersInRoom = (state) => state.room.playersInRoom;
 
-export const getSocketId = (state) => state.socket.id;
-
-export const getPlayersInRoom = (state) => state.socket.playersInRoom;
-
+// Player
 export const getPlayerId = (state) => state.player.id;
-
 export const getPlayerName = (state) => state.player.displayName;
 
 export const getCurrentScreen = (state) => state.screen.current;
