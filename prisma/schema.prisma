@@ -13,17 +13,86 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model LyricBlock {
-	id        String   @id @default(cuid())
-	startLine Int
-	endLine 	Int
-	song		Song @relation(fields: [songId], references: [id])
-	songId String
+// model LyricBlock {
+// 	id        String   @id @default(cuid())
+
+// 	startLine Int
+// 	endLine 	Int
+
+// 	song		  Song 		 @relation(fields: [songId], references: [id])
+// 	songId    String
+// }
+
+model Artist {
+	id		String @id @default(cuid())
+	name  String
+
+	songs Song[]
+
+	// similarArtists Artist[]
 }
 
 model Song {
 	id        	String   			@id @default(cuid())
-	lyricBlocks LyricBlock[]
+
+	title				String
+	artist			Artist				@relation(fields: [artistId], references: [id])
+	artistId		String
+
+	lyricBlocks String[]
+
+	// similarSongs 	Song[]
+	questions   Question[]
+
+	rounds		  Round[] 
+}
+
+enum QuestionType {
+	ARTIST
+	TITLE
+	FULL
+}
+
+model Question {
+	id 			 			String @id @default(cuid())
+
+	type		 			QuestionType
+	wrongAnswers	String[]
+
+	song 	 	 			Song @relation(fields: [songId], references: [id])
+	songId 	 			String
+}
+
+model Guess {
+	id 			 String @id @default(cuid())
+
+	title 	 String
+	artist 	 String
+
+	player 	 Player @relation(fields: [playerId], references: [id])
+	playerId String
+
+	round 	 Round  @relation(fields: [roundId], references: [id])
+	roundId  String
+
+	isCorrect Boolean @default(false)
+	score			Int			@default(0)
+}
+
+
+// 
+model Round {
+	id 				 String  @id @default(cuid())
+
+	game			 Game 	 @relation(fields: [gameId], references: [id])
+	gameId		 String
+
+	song 			 Song 	 @relation(fields: [songId], references: [id])
+	songId  	 String 
+
+	blockIndex Int		 @default(1)
+
+	guesses 	 Guess[]
 }
 
 model Game {
@@ -33,15 +102,29 @@ model Game {
 
 	gameCode			String 	 @default("")
 	groupSocketId String 	 @default("")
+
+	isActive			Boolean  @default(false) // can be joined/played
+	isStarted			Boolean  @default(false)
+	isCompleted		Boolean  @default(false)
+
+	roundIndex		Int			 @default(0)
+
+	rounds				Round[]
 	players 			Player[]
 
 	@@index([createdAt, gameCode])
 }
 
+// A player in a game
 model Player {
   id 		 			String @id @default(cuid())
-	socketId		String
+	socketId		String?
+
 	displayName String @default("Anon")
+
 	game   			Game   @relation(fields: [gameId], references: [id])
 	gameId 			String
+
+	guesses 		Guess[]
+	totalScore	Int		 @default(0)
 }
