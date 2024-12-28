@@ -1,3 +1,5 @@
+import prisma from '../prisma'
+
 export const getRoomName = (id: string) => `room-${id}`
 
 export const generateRoomCode = (length = 4) => {
@@ -26,3 +28,17 @@ export const getRoomState = (io: any, room: string): RoomState => {
 		players: usersInRoom ? Array.from(usersInRoom) : []
 	}
 }
+
+export const findConnectedPlayers = async (gameId: string) => {
+	const connectedPlayers = await prisma.player.findMany({
+		where: {
+			gameId,
+			socketId: {
+				not: '',
+			}
+		}
+	})
+	return connectedPlayers
+}
+
+export const cleanSongData = (data: string) => data.toLowerCase().replace(/[\s-_]+/g, ' ')

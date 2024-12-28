@@ -18,10 +18,11 @@ export const SOCKET_EVENTS = {
 }
 
 export const getSocketFromRequest = (req: Request) => {
+	const io = req.app.get('io');
 	const socketId = req.body.socketId;
-	// console.log(socketId)
-	const io = req.app.get('io') 
-	// console.log('sockets connected', io.sockets.sockets)
+
+	if (!socketId) return { io }
+
 	const senderSocket = io.sockets.sockets.get(socketId)
 
 	return {

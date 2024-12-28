@@ -13,6 +13,7 @@ import { updatePlayerName, createGame, joinGame, startGame, roundReplayClip, rou
 import requestLogger from "./server/requestLogger"
 import errorHandler from "./server/errorHandler"
 import { gameNotFound } from "./server/customError"
+import { findConnectedPlayers } from "./server/lib"
 
 const dev = process.env.NODE_ENV !== "production"
 const hostname = "localhost"
@@ -68,6 +69,20 @@ nextApp.prepare().then(() => {
 				return;
 			}
 			io.to(game?.groupSocketId).emit(SOCKET_EVENTS.STOP_CLIP)
+		})
+
+		socket.on(SOCKET_EVENTS.PLAYER_JOINED_GAME, async (playerId: string) => {
+			const updatedPlayer = await prisma.player.update({
+				where: {
+					id: playerId
+				},
+				data: { socketId: socket.id }
+			})
+
+			const playersInGame = await findConnectedPlayers(updatedPlayer.gameId)
+
+			console.log({ updatedPlayer, playersInGame })
+			socket.emit(SOCKET_EVENTS.PLAYER_JOINED_GAME, playersInGame)
 		})
 
 		// to do - debug this, it's not working right
