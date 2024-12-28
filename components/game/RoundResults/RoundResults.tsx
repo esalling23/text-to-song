@@ -4,8 +4,8 @@ import { useGameStateCtx } from '@/context';
 import { AnimatePresence, motion, useAnimate } from "motion/react"
 import { GuessData } from '@/lib/types';
 import { useMemo, useState } from 'react';
-import ResultsBlock from './ResultsBlock';
-import RoundScores from '../RoundScores';
+import ResultsBlock from './components/ResultsBlock';
+import RoundScores from './components/RoundScores';
 
 const revealVariants = {
 	initial: { opacity: 0 },

@@ -1,4 +1,4 @@
-import './RoundResults.css'
+import '../RoundResults.css'
 import { motion } from "motion/react"
 import { GuessData } from '@/lib/types';
 import { useEffect, useState } from 'react';

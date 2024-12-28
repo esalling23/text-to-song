@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { GuessData } from '@/lib/types';
 import RoundResults from '../RoundResults';
 import { setRoundGuesses } from '@/context/actions';
-import RoundScores from '../RoundScores';
+import RoundScores from '../RoundResults/components/RoundScores';
 
 const GroupRound = () => {
 	const { gameState, gameDispatch } = useGameStateCtx();
