@@ -8,10 +8,6 @@
 	flex-direction: column;
 }
 
-.guess-waiting {
-	opacity: 0.5;
-}
-
 .player-image {
 	border-radius: 50%;
 	width: 60%;

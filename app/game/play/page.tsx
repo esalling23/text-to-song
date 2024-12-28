@@ -1,48 +1,139 @@
 // Individual play screen
 'use client'
 
-import { useGameStateCtx, withGameContext } from "@/context";
-import { socket, SOCKET_EVENTS } from "../../../socket";
-import { FormEvent, useCallback, useEffect } from "react";
-import { getGameRoom, getPlayerId, getPlayersInRoom, getSocketId } from "@/context/selectors";
-import useSockets from "@/hooks/useSockets";
-import { PlayerData, RoomData } from "@/lib/types";
-import { setGameRoom, setPlayerId, setPlayerName } from "@/context/actions";
+import { useGameStateCtx } from "@/context";
+import { useCallback, useEffect } from "react";
+import { getCurrentRound, getGameRoom, getIsPlaying, getPlayerId, getPlayerRoundGuess, getSocketId } from "@/context/selectors";
+import { clearRoom, initGame, setGameComplete, setGameRoom, setGameStarted, setGameState, setPlayerId, setPlayerName, setPlayerRoundGuess, setRoundComplete } from "@/context/actions";
 import { updatePlayer } from "@/lib/api/player";
-import { joinGame } from "@/lib/api/game";
+import { getGame, joinGame, startGame } from "@/lib/api/game";
+import PlayerRound from "../../../components/game/PlayerRound";
+import useRefreshGame from "@/hooks/useRefreshGame";
+import { GameUpdateData } from "@/lib/types";
+import { socket, SOCKET_EVENTS } from "../../../socket";
 
-interface RoomJoinFormData extends FormData {
-	roomId: String;
-}
 
 const PlayPage = () => {
 	const { gameDispatch, gameState } = useGameStateCtx();
-	const { roomId } = getGameRoom(gameState);
+
+	const { gameId } = getGameRoom(gameState);
 	const playerId = getPlayerId(gameState);
 	const socketId = getSocketId(gameState);
+	const isPlaying = getIsPlaying(gameState);
 
-	const _ = useSockets();
+	useRefreshGame(gameDispatch)
 
-	const onGameJoined = useCallback((data: PlayerData) => {
-		console.log(data)
-		gameDispatch(setGameRoom(data.gameId))
-		gameDispatch(setPlayerId(data.id))
-		gameDispatch(setPlayerName(data.displayName))
+	const onJoinGame = useCallback((gameCode: string) => {
+		joinGame(socketId, gameCode, playerId)
+			.then((res) => {
+				const { player } = res.data
+
+				console.log('join game --- setting local storage')
+				window.localStorage.setItem('playerId', player.id);
+				window.localStorage.setItem('gameId', player.gameId);
+
+				gameDispatch(setGameRoom(player.gameId))
+				gameDispatch(setPlayerId(player.id))
+				gameDispatch(setPlayerName(player.displayName))
+			})
+			.catch(console.error);
+	}, [gameDispatch, socketId, playerId])
+
+	const onStartGame = () => {
+		// to do - confirmation popup?
+		startGame(gameId)
+			.then((data: any) => {
+				console.log(data);
+
+				// gameDispatch(setGameStarted(data))
+			})
+			.catch(console.error)
+	}
+
+	useEffect(() => {
+		if (socketId && playerId) socket.emit(SOCKET_EVENTS.PLAYER_JOINED_GAME, playerId)
+	}, [socketId, playerId])
+
+	useEffect(() => {
+		function onGameStart({ game }: GameUpdateData) {
+			gameDispatch(initGame(game.rounds))
+		}
+		function onRoundComplete() {
+			gameDispatch(setRoundComplete())
+		}
+		function onGameComplete() {
+			gameDispatch(setGameComplete())
+		}
+
+		// Check local storage for game re-joining
+		const pId = window.localStorage.getItem('playerId')
+		const gId = window.localStorage.getItem('gameId')
+
+		console.log(`Checking local storage.\nPID: ${pId || 'null'}\nGID: ${gId || 'null'}`);
+		
+		if (pId && gId) {
+			getGame(gId)
+				.then((res: any) => {
+					if (!res.data.game.isActive) {
+						console.log('game inactive --- clearing local storage')
+						window.localStorage.setItem('playerId', '')
+						window.localStorage.setItem('gameId', '')
+						gameDispatch(clearRoom())
+					} else {
+						gameDispatch(setGameRoom(gId))
+						gameDispatch(setPlayerId(pId))
+						if (res.data.game.isStarted) {
+							gameDispatch(setGameState(res.data.game))
+						}
+					}
+				})
+				.catch(err => {
+					console.error({err})
+					console.log('fetch game error --- clearing local storage')
+
+					window.localStorage.setItem('playerId', '')
+					window.localStorage.setItem('gameId', '')
+					gameDispatch(setGameRoom(''))
+					gameDispatch(setPlayerId(''))
+				})
+		}
+
+		socket.on(SOCKET_EVENTS.START_GAME, onGameStart)
+		socket.on(SOCKET_EVENTS.COMPLETE_ROUND, onRoundComplete)
+		socket.on(SOCKET_EVENTS.COMPLETE_GAME, onGameComplete)
+
+		return () => {
+			socket.off(SOCKET_EVENTS.START_GAME, onGameStart)
+			socket.off(SOCKET_EVENTS.COMPLETE_ROUND, onRoundComplete)
+			socket.off(SOCKET_EVENTS.COMPLETE_GAME, onGameComplete)
+		}
 	}, [gameDispatch])
 
-	if (roomId == null) {
+	if (!socketId) {
+		return <p>Loading...</p>
+	}
+
+	if (!gameId) {
 		return (
 			<JoinForm 
-				socketId={socketId}
-				onGameJoined={onGameJoined}
+				handleJoinGame={onJoinGame}
 			/>
 		)
 	}
 
 	return (
 		<>
-			<p>Room Joined: {gameState.socket.roomId}</p>
-			<NameForm playerId={playerId} />
+			<p>Room Joined: {gameId}</p>
+			<p>Player ID: {playerId}</p>
+			<p>Socket ID: {socketId}</p>
+
+			{isPlaying ? <PlayerRound /> : (
+				<>
+					<NameForm playerId={playerId} />
+					<p>All players ready?</p>
+					<button onClick={onStartGame}>Start Game</button>
+				</>
+			)}
 		</>
 	)
 }
@@ -60,11 +151,11 @@ const NameForm = ({ playerId }: NameFormProps) => (
 		console.log(playerId, target.displayName.value)
 
 		updatePlayer(playerId, target.displayName.value)
-			.then(res => {
+			.then((res) => {
 				console.log(res.data)
-				socket.emit(SOCKET_EVENTS.UPDATE_PLAYER_NAME)
+				// to do - success message
 			})
-			.catch(err => console.error(err))
+			.catch((err: Error) => console.error(err))
 	}}>
 		<label>
 			Optionally Update Your Display Name:
@@ -79,28 +170,21 @@ const NameForm = ({ playerId }: NameFormProps) => (
 )
 
 interface JoinFormPropTypes { 
-	socketId: string; 
-	onGameJoined: any;
+	handleJoinGame: Function;
 }
 
 const JoinForm = ({
-	socketId,
-	onGameJoined,
+	handleJoinGame
 }: JoinFormPropTypes) => {
+
 	const onSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 		const target = e.target as typeof e.target & {
 			gameCode: { value: string };
 		};
-		console.log(target.gameCode.value)
-		
-    joinGame(socketId, target.gameCode.value)
-			.then(data => {
-				console.log(data);
-				onGameJoined(data.player)
-			})
-			.catch(console.error);
-  }, [socketId, onGameJoined]);
+		handleJoinGame(target.gameCode.value)
+  }, [handleJoinGame]);
+
 	return (
 		<form onSubmit={onSubmit}>
 			<label>
@@ -117,5 +201,4 @@ const JoinForm = ({
 	)
 }
 
-
-export default withGameContext(PlayPage);
+export default PlayPage;
