@@ -29,6 +29,6 @@
       "@/*": ["./app/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "components/Navigation.jsx", "components/Container.jsx", "server.mts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "components/Navigation.jsx", "components/Container.jsx", "server.mts", "app/lib/webspeech.js"],
   "exclude": ["node_modules"]
 }

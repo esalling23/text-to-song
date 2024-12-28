@@ -8,15 +8,18 @@ export const metadata: Metadata = {
   title: "Playtime",
   description: "Play our games",
 };
-
-export default function GameLayout({
+const GameLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>) => {
   return (
     <section>
-			<GameStateCtxProvider>{children}</GameStateCtxProvider>
+			<GameStateCtxProvider>
+				{children}
+			</GameStateCtxProvider>
 		</section>
   );
 }
+
+export default GameLayout
