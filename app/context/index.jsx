@@ -8,37 +8,38 @@ import React, {
   useMemo,
 } from 'react';
 import { combinedReducer, combinedState } from './reducer';
+import useSockets from '@/hooks/useSockets';
 
 export const GameStateCtx = createContext();
 
 export const GameStateCtxProvider = ({ children }) => {
   const [gameState, dispatch] = useReducer(combinedReducer, combinedState);
 
-  const gameDispatch = useCallback(
-    (action) => {
-      if (typeof action === 'function') {
-        action(gameDispatch, () => gameState);
-      } else {
-        dispatch(action);
-      }
-    },
-    [dispatch, gameState],
-  );
+	const { isConnected, transport } = useSockets(dispatch);
 
   const contextValue = useMemo(
     () => ({
       gameState,
-      gameDispatch
+      gameDispatch: dispatch,
+			isConnected,
+			transport
     }),
     [
       gameState,
-      gameDispatch,
+      dispatch,
+			isConnected,
+			transport
     ],
   );
 
   return (
     <GameStateCtx.Provider value={contextValue}>
-      {children}
+			<p>Status: { isConnected ? "connected" : "disconnected" }</p>
+      <p>Transport: { transport }</p>
+
+			<hr/>
+
+      {isConnected && children}
     </GameStateCtx.Provider>
   );
 };
