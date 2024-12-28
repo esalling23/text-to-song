@@ -92,3 +92,8 @@ Future:
 Song -|--< LyricBlock
 Game -|--< Song
 Game -|--< Player
+
+## Problems
+
+### User disconnect/re-join handling
+
