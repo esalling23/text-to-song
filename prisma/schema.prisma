@@ -28,8 +28,6 @@ model Artist {
 	name  String
 
 	songs Song[]
-
-	// similarArtists Artist[]
 }
 
 model Song {
@@ -41,7 +39,6 @@ model Song {
 
 	lyricBlocks String[]
 
-	// similarSongs 	Song[]
 	questions   Question[]
 
 	rounds		  Round[] 
@@ -69,10 +66,10 @@ model Guess {
 	title 	 String
 	artist 	 String
 
-	player 	 Player @relation(fields: [playerId], references: [id])
+	player 	 Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 	playerId String
 
-	round 	 Round  @relation(fields: [roundId], references: [id])
+	round 	 Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
 	roundId  String
 
 	isCorrect Boolean @default(false)
@@ -84,7 +81,7 @@ model Guess {
 model Round {
 	id 				 String  @id @default(cuid())
 
-	game			 Game 	 @relation(fields: [gameId], references: [id])
+	game			 Game 	 @relation(fields: [gameId], references: [id], onDelete: Cascade)
 	gameId		 String
 
 	song 			 Song 	 @relation(fields: [songId], references: [id])
@@ -122,7 +119,7 @@ model Player {
 
 	displayName String @default("Anon")
 
-	game   			Game   @relation(fields: [gameId], references: [id])
+	game   			Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 	gameId 			String
 
 	guesses 		Guess[]
