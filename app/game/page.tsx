@@ -102,7 +102,9 @@ const Game = () => {
 			{gameCode && (
 				<>
 					<p>Room: { gameCode }</p>
-					<p>Players Joined: { playersInRoom.length || 'Waiting For Players' }</p>
+					<p>{playersInRoom?.length > 0 ? 
+						`Players Joined: ${playersInRoom.length}` : 
+						'Waiting For Players...' }</p>
 					<PlayersDisplay players={playersInRoom} />
 
 					{isPlaying && <GroupRound />}
