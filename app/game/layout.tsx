@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { GameStateCtxProvider } from '@/context/index.jsx'
+import DebugPanel from "../../components/debug/DebugPanel";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,9 +15,12 @@ const GameLayout = ({
   children: React.ReactNode;
 }>) => {
   return (
-    <section>
+    <section className="relative h-full w-full">
 			<GameStateCtxProvider>
-				{children}
+				<DebugPanel />
+				<div className="layout-container p-24 flex-center">
+					{children}
+				</div>
 			</GameStateCtxProvider>
 		</section>
   );
