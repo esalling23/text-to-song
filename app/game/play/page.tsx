@@ -2,21 +2,23 @@
 'use client'
 
 import { useGameStateCtx } from "@/context";
-import { useCallback, useEffect } from "react";
-import { getCurrentRound, getGameRoom, getIsPlaying, getPlayerId, getPlayerRoundGuess, getSocketId } from "@/context/selectors";
-import { clearRoom, initGame, setGameComplete, setGameRoom, setGameStarted, setGameState, setPlayerId, setPlayerName, setPlayerRoundGuess, setRoundComplete } from "@/context/actions";
+import { useCallback, useEffect, useMemo } from "react";
+import { getCurrentRound, getGameRoom, getIsPlaying, getPlayerId, getPlayerRoundGuess, getPlayersInRoom, getSocketId } from "@/context/selectors";
+import { clearRoom, initGame, setGameComplete, setGameRoom, setGameStarted, setGameState, setPlayerId, setPlayerName, setPlayerRoundGuess, setPlayers, setRoundComplete } from "@/context/actions";
 import { updatePlayer } from "@/lib/api/player";
 import { getGame, joinGame, startGame } from "@/lib/api/game";
 import PlayerRound from "../../../components/game/PlayerRound";
 import useRefreshGame from "@/hooks/useRefreshGame";
-import { GameUpdateData } from "@/lib/types";
+import { GameUpdateData, PlayerData } from "@/lib/types";
 import { socket, SOCKET_EVENTS } from "../../../socket";
+import { MIN_PLAYERS } from "../../../lib/constants";
 
 
 const PlayPage = () => {
 	const { gameDispatch, gameState } = useGameStateCtx();
 
 	const { gameId } = getGameRoom(gameState);
+	const players = getPlayersInRoom(gameState);
 	const playerId = getPlayerId(gameState);
 	const socketId = getSocketId(gameState);
 	const isPlaying = getIsPlaying(gameState);
@@ -64,6 +66,9 @@ const PlayPage = () => {
 		function onGameComplete() {
 			gameDispatch(setGameComplete())
 		}
+		function onPlayerUpdate(players: Array<PlayerData>) {
+			gameDispatch(setPlayers(players || []))
+		}
 
 		// Check local storage for game re-joining
 		const pId = window.localStorage.getItem('playerId')
@@ -98,16 +103,30 @@ const PlayPage = () => {
 				})
 		}
 
+		socket.on(SOCKET_EVENTS.PLAYER_JOINED_GAME, onPlayerUpdate)
 		socket.on(SOCKET_EVENTS.START_GAME, onGameStart)
 		socket.on(SOCKET_EVENTS.COMPLETE_ROUND, onRoundComplete)
 		socket.on(SOCKET_EVENTS.COMPLETE_GAME, onGameComplete)
 
 		return () => {
+			socket.off(SOCKET_EVENTS.PLAYER_JOINED_GAME, onPlayerUpdate)
 			socket.off(SOCKET_EVENTS.START_GAME, onGameStart)
 			socket.off(SOCKET_EVENTS.COMPLETE_ROUND, onRoundComplete)
 			socket.off(SOCKET_EVENTS.COMPLETE_GAME, onGameComplete)
 		}
 	}, [gameDispatch])
+
+	const startGameOption = useMemo(() => {
+		console.log({ players, MIN_PLAYERS })
+		if (players?.length >= MIN_PLAYERS) {
+			return (<>
+				<p>All players ready?</p>
+				<button onClick={onStartGame}>Start Game</button>
+			</>)
+		} else {
+			return ''
+		}
+	}, [players])
 
 	if (!socketId) {
 		return <p>Loading...</p>
@@ -129,8 +148,7 @@ const PlayPage = () => {
 
 					<hr className="m-2" />
 
-					<p>All players ready?</p>
-					<button onClick={onStartGame}>Start Game</button>
+					{startGameOption}
 				</>
 			)}
 		</>

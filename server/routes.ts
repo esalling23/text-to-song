@@ -4,8 +4,9 @@ import { v4 as uuidv4 } from 'uuid'
 import prisma from '../prisma'
 import { getSocketFromRequest, SOCKET_EVENTS } from '../socket';
 import { cleanSongData, findConnectedPlayers, generateRoomCode, getRoomName, getRoomState } from './lib';
-import { gameNotFound, gameCreationFailed, gameError, playerNotInGame, playerAlreadyGuessed } from './customError';
+import { gameNotFound, gameCreationFailed, gameError, playerNotInGame, playerAlreadyGuessed, notEnoughPlayers } from './customError';
 import { generateRounds } from './gameplay';
+import { MIN_PLAYERS } from '../lib/constants';
 
 export const updatePlayerName = async (req: Request, res: Response, next: NextFunction) => {
 	const { io } = getSocketFromRequest(req);
@@ -260,6 +261,15 @@ export const startGame = async (req: Request, res: Response, next: NextFunction)
 	const { gameId } = req.params;
 
 	try {
+
+		const gamePlayers = await prisma.player.findMany({
+			where: { gameId },
+		})
+
+		if (gamePlayers.length < MIN_PLAYERS) {
+			throw notEnoughPlayers();
+		}
+
 		const rounds = await generateRounds();
 		console.log('generated rounds', rounds)
 		const game = await prisma.game.update({

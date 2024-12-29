@@ -39,6 +39,7 @@ export const makeError = (name: ErrorName = 'Error', status: StatusCode, message
 
 export const gameCreationFailed = (message: string) => gameError(`Game Creation Failed${message ? `: ${message}` : ''}`)
 
+export const notEnoughPlayers = () => gameError('Not Enough Players to Start Game')
 export const gameNotFound = () => gameError('Game Not Found')
 export const playerNotInGame = () => gameError('Player Not in Game')
 export const playerAlreadyGuessed = () => gameError('Player Already Guessed This Round')
