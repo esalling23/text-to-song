@@ -49,7 +49,7 @@ const Game = () => {
 			})
 			.then(console.log)
 			.catch(console.error)
-		} else {
+		} else if (!gameId) {
 			fetcher(`/api/games/cleanup`, {
 				method: 'patch'
 			})
