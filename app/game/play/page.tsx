@@ -123,13 +123,12 @@ const PlayPage = () => {
 
 	return (
 		<>
-			<p>Room Joined: {gameId}</p>
-			<p>Player ID: {playerId}</p>
-			<p>Socket ID: {socketId}</p>
-
 			{isPlaying ? <PlayerRound /> : (
 				<>
 					<NameForm playerId={playerId} />
+
+					<hr className="m-2" />
+
 					<p>All players ready?</p>
 					<button onClick={onStartGame}>Start Game</button>
 				</>
@@ -142,13 +141,12 @@ interface NameFormProps {
 	playerId: string;
 }
 
-const NameForm = ({ playerId }: NameFormProps) => (
-	<form onSubmit={(e) => {
+const NameForm = ({ playerId }: NameFormProps) => {
+	const onSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		const target = e.target as typeof e.target & {
 			displayName: { value: string };
 		};
-		console.log(playerId, target.displayName.value)
 
 		updatePlayer(playerId, target.displayName.value)
 			.then((res) => {
@@ -156,18 +154,22 @@ const NameForm = ({ playerId }: NameFormProps) => (
 				// to do - success message
 			})
 			.catch((err: Error) => console.error(err))
-	}}>
-		<label>
-			Optionally Update Your Display Name:
-			<input
-				type="text"
-				name="displayName"
-				required
-				className="text-black"
-			/>
-		</label>
-	</form>
-)
+	}, [playerId])
+	
+	return (
+		<form onSubmit={onSubmit} className="text-center">
+			<label>
+				Set Your Display Name:
+				<input
+					type="text"
+					name="displayName"
+					required
+					className="text-black"
+				/>
+			</label>
+		</form>
+	)
+}
 
 interface JoinFormPropTypes { 
 	handleJoinGame: Function;
@@ -186,7 +188,7 @@ const JoinForm = ({
   }, [handleJoinGame]);
 
 	return (
-		<form onSubmit={onSubmit}>
+		<form onSubmit={onSubmit} className="text-center">
 			<label>
 				Enter Room Code: 
 				<input
@@ -196,7 +198,7 @@ const JoinForm = ({
 					className="text-black"
 				/>
 			</label>
-			<p>No Game Code? Start a game first to get a code.</p>
+			<p className="hint">No Game Code? Start a game first to get a code.</p>
 		</form>
 	)
 }

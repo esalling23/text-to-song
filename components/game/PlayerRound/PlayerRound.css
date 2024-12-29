@@ -20,3 +20,7 @@
 .player-name {
 	background: white;
 }
+
+form label {
+	padding: 0.5em;
+}

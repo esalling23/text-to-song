@@ -61,21 +61,27 @@ const PlayerRound = () => {
 		)
 	}
 	return (
-		<div className="screen flex-center">
+		<div className="screen flex-center gap-6">
 			<h2>You are now playing! Make a guess below:</h2>
-			<form onSubmit={handleSubmitGuesses}>
+			<form 
+				onSubmit={handleSubmitGuesses} 
+				className="flex-center text-center p-4 divide-y divide-dashed border-solid border-2 border-sky-500 rounded-lg"
+			>
 				<label>
-					Guess Song Title
+					Song Title
 					<input required name="title" placeholder="Song Title"/>
 				</label>
 				<label>
-					Guess Artist Name
+					Artist Name
 					<input required name="artist" placeholder="Artist Name"/>
 				</label>
 				<button type="submit">MAKE GUESS</button>
 			</form>
-			<button onClick={handleReplay}>Replay Clip</button>
-			<button onClick={handleStopClip}>Stop Clip</button>
+
+			<div className="flex flex-row gap-2">
+				<button onClick={handleReplay}>Replay Clip</button>
+				<button onClick={handleStopClip}>Stop Clip</button>
+			</div>
 		</div>
 	)
 }

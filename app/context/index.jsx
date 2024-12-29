@@ -34,11 +34,6 @@ export const GameStateCtxProvider = ({ children }) => {
 
   return (
     <GameStateCtx.Provider value={contextValue}>
-			<p>Status: { isConnected ? "connected" : "disconnected" }</p>
-      <p>Transport: { transport }</p>
-
-			<hr/>
-
       {isConnected && children}
     </GameStateCtx.Provider>
   );

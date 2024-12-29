@@ -24,7 +24,10 @@ const KillGameButton = ({ gameId, socketId, onSuccess }: KillProps) => {
 	}
 
 	return (
-		<button onClick={handleKillGame}>Kill Game</button>
+		<button 
+			onClick={handleKillGame}
+			className="absolute right-0 top-0"
+		>Kill Game</button>
 	)
 }
 
