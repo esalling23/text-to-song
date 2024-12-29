@@ -8,6 +8,8 @@ import { gameNotFound, gameCreationFailed, gameError, playerNotInGame, playerAlr
 import { generateRounds } from './gameplay';
 
 export const updatePlayerName = async (req: Request, res: Response, next: NextFunction) => {
+	const { io } = getSocketFromRequest(req);
+	
 	try {
 		console.log(req.body)
 		const player = await prisma.player.update({
@@ -35,26 +37,7 @@ export const updatePlayerName = async (req: Request, res: Response, next: NextFu
 		if (!game) {
 			throw gameNotFound()
 		}
-		
-		console.log({players: game.players})
-
-		// await prisma.player.deleteMany({
-		// 	where: { gameId: game.id, socketId: undefined }
-		// })
-
-		// const cleanGame = await prisma.game.update({
-		// 	where: {
-		// 		id: game.id,
-		// 	},
-		// 	include: { players: true },
-		// 	data: {
-		// 		players: cleanPlayers
-		// 	}
-		// })
-
-
-		// Tell the group screen about this change
-		const io = req.app.get('io') 
+	
 		io.to(game.groupSocketId).emit(SOCKET_EVENTS.PLAYERS_UPDATED, game.players);
 
 		res.status(200).send({ success: true, data: player })
