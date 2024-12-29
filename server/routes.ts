@@ -102,6 +102,26 @@ export const getGame = async (req: Request, res: Response, next: NextFunction) =
 	}
 }
 
+export const cleanupGames = async (req: Request, res: Response, next: NextFunction) => {
+	const { io } = getSocketFromRequest(req);
+
+	
+	const allGames = await prisma.game.findMany()
+
+	const gamesToRemove = allGames.filter(game => {
+		// REturn if game is NOT connected
+		return !io.sockets.sockets[game.groupSocketId]
+	}).map(game => game.id);
+
+	const gamesRemoved = await prisma.game.deleteMany({
+		where: { id: { in: gamesToRemove } }
+	})
+
+	console.log({ gamesRemoved })
+
+	res.status(201).send({ message: 'success' })
+}
+
 export const updateGameSocket = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { io, socket } = getSocketFromRequest(req)

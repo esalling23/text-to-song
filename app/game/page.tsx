@@ -50,7 +50,7 @@ const Game = () => {
 			.then(console.log)
 			.catch(console.error)
 		} else {
-			fetcher(`/api/game/cleanup`, {
+			fetcher(`/api/games/cleanup`, {
 				method: 'patch'
 			})
 			.catch(console.error)
