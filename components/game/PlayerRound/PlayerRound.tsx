@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent } from 'react';
 import './PlayerRound.css'
 
 import { getGameRoom, getPlayerId, getPlayerRoundGuess, getSocketId } from '@/context/selectors';
@@ -9,12 +9,10 @@ import { setPlayerRoundGuess } from '@/context/actions';
 
 const PlayerRound = () => {
 	const { gameState, gameDispatch } = useGameStateCtx();
-	const { gameId } = getGameRoom(gameState);
+	const { gameId, gameCode } = getGameRoom(gameState);
 	const playerId = getPlayerId(gameState);
 	const socketId = getSocketId(gameState);
 	const playerRoundGuess = getPlayerRoundGuess(gameState);
-
-	// const [hasGuessed, setHasGuessed] = useState(playerRoundGuess || false);
 
 	const handleReplay = () => {
 		poster(`/api/game/${gameId}/round/replay`, { socketId })
@@ -22,7 +20,7 @@ const PlayerRound = () => {
 			.catch(console.error)
 	}
 	const handleStopClip = () => {
-		socket.emit(SOCKET_EVENTS.STOP_CLIP)
+		socket.emit(SOCKET_EVENTS.STOP_CLIP, gameCode)
 	}
 
 	const handleSubmitGuesses = (e: FormEvent) => {

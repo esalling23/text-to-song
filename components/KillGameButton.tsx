@@ -1,23 +1,25 @@
 'use client'
 import { killGame } from "@/lib/api/game";
+import useRefreshGame from "@/hooks/useRefreshGame";
+import { useGameStateCtx } from "@/context";
+import { useCallback } from "react";
+import { getGameRoom, getSocketId } from "@/context/selectors";
 
-interface KillProps {
-	gameId: string;
-	socketId: string;
-	onSuccess: Function;
-}
-
-const KillGameButton = ({ gameId, socketId, onSuccess }: KillProps) => {
-	const handleKillGame = () => {
+const KillGameButton = () => {
+	const { gameState, gameDispatch } = useGameStateCtx()
+	const { gameId } = getGameRoom(gameState)
+	const socketId = getSocketId(gameState)
+	const { refreshGameData } = useRefreshGame(gameDispatch)
+	
+	const handleKillGame = useCallback(() => {
 		if (!socketId || !gameId) return;
 
 		killGame(gameId, socketId)
-				.then(res => {
-					console.log(res)
-					onSuccess()
-				})
-				.catch(console.error)
-	}
+			.then(res => {
+				refreshGameData(gameId)
+			})
+			.catch(console.error)
+	}, [refreshGameData, gameId])
 
 	if (!gameId) {
 		return <></> // should we hide instead?

@@ -6,7 +6,6 @@ import { useEffect } from 'react';
 import { GuessData } from '@/lib/types';
 import RoundResults from '../RoundResults';
 import { setRoundGuesses } from '@/context/actions';
-import RoundScores from '../RoundResults/components/RoundScores';
 
 const GroupRound = () => {
 	const { gameState, gameDispatch } = useGameStateCtx();
@@ -19,6 +18,8 @@ const GroupRound = () => {
 	useEffect(() => {
 		const handlePlayClip = () => {
 			const synth = window.speechSynthesis
+
+			console.log('playing clip', { synth, lyrics })
 	
 			synth.speak(new SpeechSynthesisUtterance(lyrics))
 		}
