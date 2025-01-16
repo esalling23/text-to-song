@@ -12,6 +12,9 @@ import useRefreshGame from "@/hooks/useRefreshGame";
 import { GameUpdateData, PlayerData } from "@/lib/types";
 import { socket, SOCKET_EVENTS } from "../../../socket";
 import { MIN_PLAYERS } from "../../../lib/constants";
+import NameForm from "../../../components/game/PlayerForms/NameForm";
+import IconForm from "../../../components/game/PlayerForms/IconForm";
+import JoinForm from "../../../components/game/PlayerForms/JoinForm";
 
 
 const PlayPage = () => {
@@ -134,7 +137,7 @@ const PlayPage = () => {
 
 	if (!gameId) {
 		return (
-			<JoinForm 
+			<JoinForm
 				handleJoinGame={onJoinGame}
 			/>
 		)
@@ -145,6 +148,11 @@ const PlayPage = () => {
 			{isPlaying ? <PlayerRound /> : (
 				<>
 					<NameForm playerId={playerId} />
+					<IconForm
+						gameCode={gameCode} 
+						playerId={playerId} 
+						socket={socket}
+					/>
 
 					<hr className="m-2" />
 
@@ -152,72 +160,6 @@ const PlayPage = () => {
 				</>
 			)}
 		</>
-	)
-}
-
-interface NameFormProps {
-	playerId: string;
-}
-
-const NameForm = ({ playerId }: NameFormProps) => {
-	const onSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		const target = e.target as typeof e.target & {
-			displayName: { value: string };
-		};
-
-		updatePlayer(playerId, target.displayName.value)
-			.then((res) => {
-				console.log(res.data)
-				// to do - success message
-			})
-			.catch((err: Error) => console.error(err))
-	}, [playerId])
-	
-	return (
-		<form onSubmit={onSubmit} className="text-center">
-			<label>
-				Set Your Display Name:
-				<input
-					type="text"
-					name="displayName"
-					required
-					className="text-black"
-				/>
-			</label>
-		</form>
-	)
-}
-
-interface JoinFormPropTypes { 
-	handleJoinGame: Function;
-}
-
-const JoinForm = ({
-	handleJoinGame
-}: JoinFormPropTypes) => {
-
-	const onSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-		const target = e.target as typeof e.target & {
-			gameCode: { value: string };
-		};
-		handleJoinGame(target.gameCode.value)
-  }, [handleJoinGame]);
-
-	return (
-		<form onSubmit={onSubmit} className="text-center">
-			<label>
-				Enter Room Code: 
-				<input
-					type="text"
-					name="gameCode"
-					required
-					className="text-black"
-				/>
-			</label>
-			<p className="hint">No Game Code? Start a game first to get a code.</p>
-		</form>
 	)
 }
 

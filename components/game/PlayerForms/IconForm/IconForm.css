@@ -1,0 +1,14 @@
+
+button:disabled {
+	opacity: 0.6;
+}
+
+button.isAvailable {
+	/* background: blue; */
+	opacity: 1;
+}
+
+button.isSelected {
+	opacity: 1;
+	background: blue;
+}
