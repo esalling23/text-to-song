@@ -8,24 +8,18 @@ const roundReplayClip = async (req: Request, res: Response, next: NextFunction) 
 	const { gameId } = req.params;
 
 	try {
-		// Make sure the game exists
-		const game = await prisma.game.findUnique({
-			where: { id: gameId }
-		});
+        const game = await prisma.game.findUniqueOrThrow({ // Use findUniqueOrThrow
+            where: { id: gameId }
+        });
 
-		if (!game) {
-			throw gameNotFound()
-		}
+        console.log(`Telling Group Socket ${game.groupSocketId} to Replay`)
 
-		console.log(`Telling Group Socket ${game.groupSocketId} to Replay`)
+        io.to(game.groupSocketId).emit(SOCKET_EVENTS.REPLAY_CLIP);
 
-		// Tell the group screen to replay
-		io.to(game.groupSocketId).emit(SOCKET_EVENTS.REPLAY_CLIP);
-
-		res.sendStatus(200)
-	} catch(err) {
-		next(err);
-	}
+        res.sendStatus(200)
+    } catch (err) {
+        next(err);
+    }
 }
 
 export default roundReplayClip
