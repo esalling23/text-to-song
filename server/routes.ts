@@ -30,6 +30,7 @@ router.get('/game', getAllGames)
 router.post('/game', createGame)
 router.get('/game/:gameId', getGame)
 router.delete('/game/:gameId', killGame)
+import updateGameSocket from './routes/updateGameSocket'; // Import the route handler
 router.patch('/game/:gameId', updateGameSocket)
 
 router.post('/game/join', joinGame)
