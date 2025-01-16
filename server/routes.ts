@@ -1,4 +1,11 @@
-import { Router } from 'express';
+import { Router, NextFunction, Request, Response } from 'express';
+import prisma from '../../prisma'
+import { getSocketFromRequest, SOCKET_EVENTS } from '../../socket';
+import { cleanSongData, findConnectedPlayers, generateRoomCode, getRoomName, getRoomState } from '../lib';
+import { MIN_PLAYERS } from '../../lib/constants';
+import { generateRounds } from '../gameplay';
+
+import { gameCreationFailed, gameError, gameNotFound, notEnoughPlayers, playerAlreadyGuessed, playerNotInGame } from '../customError';
 import updatePlayerName from './routes/updatePlayerName';
 import selectIcon from './routes/selectIcon';
 import cleanupGames from './routes/cleanupGames';
@@ -6,7 +13,6 @@ import getAllGames from './routes/getAllGames';
 import createGame from './routes/createGame';
 import getGame from './routes/getGame';
 import killGame from './routes/killGame';
-import updateGameSocket from './routes/updateGameSocket';
 import joinGame from './routes/joinGame';
 import startGame from './routes/startGame';
 import roundReplayClip from './routes/roundReplayClip';

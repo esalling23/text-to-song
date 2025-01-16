@@ -1,13 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 import prisma from '../../prisma'
-import { gameNotFound } from '../customError';
 import { findConnectedPlayers } from '../lib';
 
 const getGame = async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const gameId = req.params.gameId;
-		const game = await prisma.game.findUnique({ 
-			where: { id: gameId },
+    try {
+        const gameId = req.params.gameId;
+        const game = await prisma.game.findUniqueOrThrow({  // Use findUniqueOrThrow to simplify error handling
+            where: { id: gameId },
 			include: { 
 				rounds: { 
 					include: { 

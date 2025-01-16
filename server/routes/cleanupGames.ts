@@ -10,10 +10,10 @@ const cleanupGames = async (req: Request, res: Response, next: NextFunction) => 
 
 	const gamesToRemove = allGames.filter(game => {
 		// REturn if game is NOT connected
-		return !io.sockets.sockets[game.groupSocketId]
-	}).map(game => game.id);
+        return !io.sockets.adapter.rooms.get(game.groupSocketId)
+    }).map(game => game.id); // Use io.sockets.adapter.rooms
 
-	const gamesRemoved = await prisma.game.deleteMany({
+    await prisma.game.deleteMany({
 		where: { id: { in: gamesToRemove } }
 	})
 
