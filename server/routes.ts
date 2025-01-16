@@ -1,20 +1,469 @@
-import { Router } from 'express';
+import { Router, NextFunction, Request, Response } from 'express';
+import prisma from '../../prisma'
+import { getSocketFromRequest, SOCKET_EVENTS } from '../../socket';
+import { cleanSongData, findConnectedPlayers, generateRoomCode, getRoomName, getRoomState } from '../lib';
+import { MIN_PLAYERS } from '../../lib/constants';
+import { generateRounds } from '../gameplay';
 
-import createGame from './routes/createGame';
-import startGame from './routes/startGame';
-import getAllGames from './routes/getAllGames';
-import getGame from './routes/getGame';
-import joinGame from './routes/joinGame';
-import killGame from './routes/killGame';
-import roundComplete from './routes/roundComplete';
-import roundGuess from './routes/roundGuess';
-import roundReplayClip from './routes/roundReplayClip';
-import updateGameSocket from './routes/updateGameSocket';
-import updatePlayerName from './routes/updatePlayerName';
-import cleanupGames from './routes/cleanupGames';
-import selectIcon from './routes/selectIcon';
+import { gameCreationFailed, gameError, gameNotFound, notEnoughPlayers, playerAlreadyGuessed, playerNotInGame } from '../customError';
+import { Player } from '@prisma/client';
+
 
 const router = Router();
+
+// Route Handlers
+
+export const updatePlayerName = async (req: Request, res: Response, next: NextFunction) => {
+	const { io } = getSocketFromRequest(req);
+	
+	try {
+		const player = await prisma.player.update({
+			where: {
+				id: req.body.playerId
+			},
+			 {
+				displayName: req.body.name
+			}
+		});
+
+		const game = await prisma.game.findFirst({
+			where: {
+				players: {
+					some: { id: player.id }
+				}
+			},
+			include: { players: true }
+		})
+
+		
+		if (!game) {
+			throw gameNotFound()
+		}
+	
+		io.to(game.groupSocketId).emit(SOCKET_EVENTS.PLAYERS_UPDATED, game.players);
+
+		res.status(200).send({ success: true,  player })
+	} catch(err) {
+		next(err)
+	}
+}
+
+export const getAllGames = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const games = await prisma.game.findMany({})
+		res.status(200).json({ games });
+	} catch(err) {
+		next(err)
+	}
+}
+
+export const getGame = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const gameId = req.params.gameId;
+		const game = await prisma.game.findUnique({ 
+			where: { id: gameId },
+			include: { 
+				rounds: { 
+					include: { 
+						song: { include: { artist: true } }, 
+						guesses: true 
+					} 
+				} 
+			}
+		})
+
+		if (!game) {
+			throw gameNotFound()
+		}
+
+		const players = await findConnectedPlayers(gameId);
+
+		res.status(200).json({ game, players });
+	} catch(err) {
+		next(err)
+	}
+}
+
+export const cleanupGames = async (req: Request, res: Response, next: NextFunction) => {
+	const { io } = getSocketFromRequest(req);
+
+	
+	const allGames = await prisma.game.findMany()
+
+	const gamesToRemove = allGames.filter(game => {
+		return !io.sockets.sockets[game.groupSocketId]
+	}).map(game => game.id);
+
+	await prisma.game.deleteMany({
+		where: { id: { in: gamesToRemove } }
+	})
+
+	res.status(201).send({ message: 'success' })
+}
+
+export const updateGameSocket = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { io, socket } = getSocketFromRequest(req)
+		const gameId = req.params.gameId;
+
+		const game = await prisma.game.update({ 
+			where: { id: gameId },
+			 { groupSocketId: socket?.id }
+		})
+
+		if (!game) {
+			throw gameNotFound()
+		}
+
+		const players = await findConnectedPlayers(gameId);
+
+		io.to(getRoomName(game.gameCode)).emit(SOCKET_EVENTS.REFRESH_GAME, gameId)
+
+		res.status(200).json({ game, players });
+	} catch(err) {
+		next(err)
+	}
+}
+
+export const createGame = async (req: Request, res: Response, next: NextFunction) => {
+	const games = await prisma.game.findMany({ select: { gameCode: true }})
+	const existingGameCodes = games.map(g => g.gameCode);
+
+	let roomCode: string
+	do {
+		roomCode = generateRoomCode();
+	} while (existingGameCodes.includes(roomCode))
+	
+	const room = getRoomName(roomCode);
+	const { io, socket } = getSocketFromRequest(req);
+	socket.join(room)
+
+	const roomState = getRoomState(io, room)
+	const groupSocketId = roomState.players[0] || '';
+	if (!groupSocketId) {
+		throw gameCreationFailed('No Group Client Connection')
+	}
+
+	try {
+		const game = await prisma.game.create({
+			 {
+				isActive: true,
+				gameCode: roomCode,
+				groupSocketId
+			},
+		});
+	
+		res.status(200).send({ game })
+	} catch(err) {
+		next(err)
+	}
+}
+
+export const joinGame = async (req: Request, res: Response, next: NextFunction) => {
+	const { io, socket } = getSocketFromRequest(req);
+	const { playerId, gameCode } = req.body;
+	const room = getRoomName(gameCode)
+
+	try {
+		const game = await prisma.game.findFirst({
+			where: {
+				gameCode
+			},
+			include: { 
+				players: true, 
+				rounds: { 
+					include: { 
+						song: { 
+							include: { artist: true } 
+						}
+					}
+				} 
+			}
+		})
+
+		if (!game) {
+			throw gameNotFound()
+			return;
+		} else if (!game.isActive) {
+			throw gameError('Game Not Active')
+			return;
+		} else if (game.isCompleted) {
+			throw gameError('Cannot Join Completed Game')
+			return;
+		}
+
+		let player;
+		if (playerId) {
+			player = await prisma.player.findUnique({ where: { id: playerId }})
+		}
+
+		if (!player && socket?.id) {
+			player = await prisma.player.create({
+				 {
+					socketId: socket.id,
+					displayName: 'Anon',
+					game: {
+						connect: {
+							id: game.id
+						}
+					}
+				}
+			})
+			socket.join(room)
+		}
+		
+		const updatedGame = await prisma.game.findUnique({
+			where: {
+				id: game.id
+			},
+		})
+
+		const players = await findConnectedPlayers(game.id)
+		
+		io.to(room).emit(SOCKET_EVENTS.PLAYER_JOINED_GAME, players)
+	
+		res.status(200).json({ player, game: updatedGame })
+	} catch(err) {
+		next(err)
+	}
+}
+
+export const killGame = async (req: Request, res: Response, next: NextFunction) => {
+	const { gameId } = req.params;
+	const { io, socket } = getSocketFromRequest(req);
+	try {
+		const game = await prisma.game.update({ 
+			where: { id: gameId },
+			data: { isActive: false },
+			include: { players: true }
+		})
+		if (!game) {
+			throw gameNotFound()
+		}
+
+		const room = getRoomName(game.gameCode)
+
+		io.to(game.groupSocketId).emit(SOCKET_EVENTS.STOP_CLIP);
+		io.to(room).emit(SOCKET_EVENTS.REFRESH_GAME, gameId)
+
+		socket.leave(room)
+
+		res.sendStatus(204)
+	} catch(err) {
+		next(err)
+	}
+}
+
+export const roundReplayClip = async (req: Request, res: Response, next: NextFunction) => {
+	const { io } = getSocketFromRequest(req);
+	const { gameId } = req.params;
+
+	try {
+		const game = await prisma.game.findUnique({
+			where: { id: gameId }
+		});
+
+		if (!game) {
+			throw gameNotFound()
+		}
+
+		io.to(game.groupSocketId).emit(SOCKET_EVENTS.REPLAY_CLIP);
+
+		res.sendStatus(200)
+	} catch(err) {
+		next(err);
+	}
+}
+
+export const roundGuess = async (req: Request, res: Response, next: NextFunction) => {
+	const { io } = getSocketFromRequest(req);
+	const { gameId } = req.params;
+	const { title, artist, playerId } = req.body;
+
+	try {
+		const game = await prisma.game.findUnique({
+			where: {
+				id: gameId,
+				isActive: true,
+				isStarted: true,
+				isCompleted: false
+			},
+			include: { 
+				players: true, 
+				rounds: { 
+					include: { 
+						song: { include: { artist: true } }, 
+						guesses: true 
+					} 
+				} 
+			}
+		})
+
+		if (!game) {
+			throw gameNotFound()
+		}
+
+		const player = game.players.find(p => p.id === playerId)
+		if (!player) {
+			throw playerNotInGame()
+		}
+		
+		const round = game.rounds[game.roundIndex]
+		const currentRoundGuess = round.guesses.some(g => g.playerId === playerId)
+		if (currentRoundGuess) throw playerAlreadyGuessed()
+
+		const isCorrectTitle = cleanSongData(title) === cleanSongData(round.song.title)
+		const isCorrectArtist = cleanSongData(artist) === cleanSongData(round.song.artist.name)
+		const guess = await prisma.guess.create({
+			 {
+				title,
+				artist,
+				player: { connect: { id: player.id } },
+				round: { connect: { id: round.id } },
+				isCorrect: isCorrectTitle && isCorrectArtist,
+				score: (isCorrectArtist ? 50 : 0) + (isCorrectTitle ? 50 : 0)
+			},
+			include: { player: true }
+		})
+
+		await prisma.player.update({
+			where: {
+				id: playerId
+			},
+			 {
+				totalScore: player.totalScore + guess.score
+			}
+		})
+
+		const updatedPlayers = await prisma.player.findMany({
+			where: {
+				gameId: game.id
+			}
+		})
+
+		const roundGuesses = await prisma.guess.findMany({
+			where: { 
+				roundId: round.id, 
+			},
+			include: { player: true }
+		})
+
+		io.to(game.groupSocketId).emit(SOCKET_EVENTS.PLAYERS_UPDATED, updatedPlayers);
+		io.to(game.groupSocketId).emit(SOCKET_EVENTS.ROUND_GUESS, roundGuesses);
+
+		res.status(200).json({ game })
+	} catch(err) {
+		next(err);
+	}
+}
+
+export const roundComplete = async (req: Request, res: Response, next: NextFunction) => {
+	const { io } = getSocketFromRequest(req);
+	const { gameId } = req.params;
+
+	const include = {
+		include: { 
+			players: true, 
+			rounds: { 
+				include: { 
+					song: { include: { artist: true } }, 
+					guesses: true 
+				} 
+			} 
+		}
+	}
+
+	try {
+		const game = await prisma.game.findUnique({
+			where: {
+				id: gameId,
+				isActive: true,
+				isStarted: true,
+				isCompleted: false
+			},
+			...include
+		})
+
+		if (!game) {
+			throw gameNotFound()
+		}
+
+		const room = getRoomName(game.gameCode)
+
+		if (game.roundIndex >= game.rounds.length - 1) {
+			io.to(room).emit(SOCKET_EVENTS.COMPLETE_GAME, game)
+
+			res.status(200).json({ game })
+			return;
+		}
+
+		const updatedGame = await prisma.game.update({
+			where: {
+				id: game.id,
+			},
+			 {
+				roundIndex: game.roundIndex + 1,
+			},
+			...include
+		})
+		io.to(room).emit(SOCKET_EVENTS.COMPLETE_ROUND, updatedGame);
+
+		res.status(200).json({ game })
+	} catch(err) {
+		next(err);
+	}
+}
+
+export const startGame = async (req: Request, res: Response, next: NextFunction) => {
+	const { io } = getSocketFromRequest(req);
+	const { gameId } = req.params;
+
+	try {
+		const gamePlayers = await prisma.player.findMany({
+			where: { gameId },
+		})
+
+		if (gamePlayers.length < MIN_PLAYERS) {
+			throw notEnoughPlayers();
+		}
+
+		const rounds = await generateRounds();
+		const game = await prisma.game.update({
+			where: {
+				id: gameId,
+				isActive: true,
+				isStarted: false,
+				isCompleted: false
+			},
+			 {
+				roundIndex: 0,
+				isStarted: true,
+				rounds: { createMany: {  rounds } }
+			},
+			include: { rounds: { 
+				include: { song: { 
+					include: { artist: true } } 
+				} } 
+			}
+		})
+
+		if (!game) {
+			throw gameNotFound()
+		} 
+
+		const players = await findConnectedPlayers(game.id)
+
+		io.in(getRoomName(game.gameCode)).emit(SOCKET_EVENTS.START_GAME, {
+			game,
+			players
+		});
+
+		res.status(200).json({ game })
+	} catch(err) {
+		next(err);
+	}
+}
+
 
 router.post('/player/update-name', updatePlayerName)
 router.post('/player/icon', selectIcon)
@@ -33,6 +482,9 @@ router.post('/game/:gameId/start', startGame)
 router.post('/game/:gameId/round/replay', roundReplayClip)
 router.post('/game/:gameId/round/guess', roundGuess)
 router.post('/game/:gameId/round/complete', roundComplete)
+
+
+export default router;
 
 	const { io } = getSocketFromRequest(req);
 	
