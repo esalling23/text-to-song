@@ -31,7 +31,6 @@ export const initialState = {
 };
 
 const roomReducer = (state, action) => {
-	console.log(action)
   switch (action.type) {
     case ACTION_TYPE.SET_SOCKET: {
       return {

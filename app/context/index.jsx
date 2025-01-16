@@ -4,7 +4,6 @@ import React, {
   useReducer,
   useContext,
   createContext,
-  useCallback,
   useMemo,
 } from 'react';
 import { combinedReducer, combinedState } from './reducer';
