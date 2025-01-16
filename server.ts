@@ -1,7 +1,5 @@
-import { createServer } from "node:http"
 import next from "next"
 import { Server } from 'socket.io'
-import crypto from 'crypto'
 import express from 'express'
 import http from 'http'
 
@@ -9,11 +7,14 @@ import prisma from './prisma'
 import { SOCKET_EVENTS } from './socket'
 import bodyParser from "body-parser"
 import cookieParser from 'cookie-parser';
-import { updatePlayerName, createGame, joinGame, startGame, roundReplayClip, roundGuess, getGame, getAllGames, killGame, updateGameSocket, roundComplete, cleanupGames } from "./server/routes"
+import { updatePlayerName, createGame, joinGame, roundReplayClip, roundGuess, getGame, getAllGames, killGame, updateGameSocket, roundComplete, cleanupGames } from "./server/routes"
+import startGame from "./server/routes/startGame"
 import requestLogger from "./server/requestLogger"
 import errorHandler from "./server/errorHandler"
 import { gameNotFound } from "./server/customError"
-import { findConnectedPlayers } from "./server/lib"
+import { findConnectedPlayers, getRoomName } from "./server/lib"
+import { IconEvent } from "./components/game/PlayerForms/IconForm/IconForm"
+import selectIcon from "./server/routes/selectIcon"
 
 const dev = process.env.NODE_ENV !== "production"
 const hostname = "localhost"
@@ -49,6 +50,7 @@ nextApp.prepare().then(() => {
 					// Game is active, rejoin the user
 					socket.join(game.groupSocketId);
 					// ... (rest of the rejoin logic)
+					socket.join(getRoomName(game.gameCode))
 				} else {
 					// Game is inactive, clear the cookie
 					socket.emit('clearCookie', 'gameId');
@@ -59,6 +61,10 @@ nextApp.prepare().then(() => {
 				socket.emit('clearCookie', 'gameId');
 			}
 		}
+
+		socket.onAny((eventName: string, ...args: any) => {
+			console.log({ eventName, ...args })
+		});
 
 		socket.emit(SOCKET_EVENTS.CONNECTED, socket.id);
 
@@ -71,13 +77,26 @@ nextApp.prepare().then(() => {
 			io.to(game?.groupSocketId).emit(SOCKET_EVENTS.STOP_CLIP)
 		})
 
+		socket.on(SOCKET_EVENTS.DESELECT_ICON, async ({ gameCode, icon, playerId }: IconEvent) => {
+			// to do - debug rooms more to not need this check
+			if (![...socket.rooms].includes(getRoomName(gameCode)))
+				socket.join(getRoomName(gameCode))
+
+			io.in(getRoomName(gameCode)).emit(SOCKET_EVENTS.DESELECT_ICON, { gameCode, icon, playerId })
+		})
+
 		socket.on(SOCKET_EVENTS.PLAYER_JOINED_GAME, async (playerId: string) => {
+			
+			
 			const updatedPlayer = await prisma.player.update({
 				where: {
 					id: playerId
 				},
-				data: { socketId: socket.id }
+				data: { socketId: socket.id },
+				include: { game: true }
 			})
+
+			socket.join(getRoomName(updatedPlayer.game.gameCode))
 
 			const playersInGame = await findConnectedPlayers(updatedPlayer.gameId)
 
@@ -116,6 +135,7 @@ nextApp.prepare().then(() => {
 	})
 
 	app.post('/api/player/update-name', updatePlayerName)
+	app.post('/api/player/icon', selectIcon)
 
 	app.patch('/api/games/cleanup', cleanupGames)
 	

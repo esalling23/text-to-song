@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid' 
 
 import prisma from '../prisma'
@@ -6,13 +6,15 @@ import { getSocketFromRequest, SOCKET_EVENTS } from '../socket';
 import { cleanSongData, findConnectedPlayers, generateRoomCode, getRoomName, getRoomState } from './lib';
 import { gameNotFound, gameCreationFailed, gameError, playerNotInGame, playerAlreadyGuessed, notEnoughPlayers } from './customError';
 import { generateRounds } from './gameplay';
+import { Player } from '@prisma/client';
 import { MIN_PLAYERS } from '../lib/constants';
+
+
 
 export const updatePlayerName = async (req: Request, res: Response, next: NextFunction) => {
 	const { io } = getSocketFromRequest(req);
 	
 	try {
-		console.log(req.body)
 		const player = await prisma.player.update({
 			where: {
 				id: req.body.playerId
@@ -22,7 +24,7 @@ export const updatePlayerName = async (req: Request, res: Response, next: NextFu
 			}
 		});
 
-		console.log({player})
+		// console.log({player})
 
 		const game = await prisma.game.findFirst({
 			where: {
@@ -77,8 +79,8 @@ export const getGame = async (req: Request, res: Response, next: NextFunction) =
 
 		const players = await findConnectedPlayers(gameId);
 
-		console.log('players connected', players)
-		console.log('game round 1 with guesses', game.rounds[0]?.guesses)
+		// console.log('players connected', players)
+		// console.log('game round 1 with guesses', game.rounds[0]?.guesses)
 
 		res.status(200).json({ game, players });
 	} catch(err) {
@@ -101,7 +103,7 @@ export const cleanupGames = async (req: Request, res: Response, next: NextFuncti
 		where: { id: { in: gamesToRemove } }
 	})
 
-	console.log({ gamesRemoved })
+	// console.log({ gamesRemoved })
 
 	res.status(201).send({ message: 'success' })
 }
@@ -111,7 +113,7 @@ export const updateGameSocket = async (req: Request, res: Response, next: NextFu
 		const { io, socket } = getSocketFromRequest(req)
 		// console.log('updating game socket from socket: ', { socket })
 		const gameId = req.params.gameId;
-		console.log('found socket?? ', !!socket)
+		// console.log('found socket?? ', !!socket)
 		// if (!socket) res.send({ message: 'empty socket' });
 
 		const game = await prisma.game.update({ 
@@ -123,13 +125,13 @@ export const updateGameSocket = async (req: Request, res: Response, next: NextFu
 			throw gameNotFound()
 		}
 
-		console.log('game socket updated', game)
+		// console.log('game socket updated', game)
 
 		const players = await findConnectedPlayers(gameId);
 
-		console.log('players connected', players)
+		// console.log('players connected', players)
 
-		io.to(getRoomName(game.gameCode)).emit(SOCKET_EVENTS.REFRESH_GAME, { game, players })
+		io.to(getRoomName(game.gameCode)).emit(SOCKET_EVENTS.REFRESH_GAME, gameId)
 
 		res.status(200).json({ game, players });
 	} catch(err) {
@@ -153,6 +155,8 @@ export const createGame = async (req: Request, res: Response, next: NextFunction
 	const { io, socket } = getSocketFromRequest(req);
 	socket.join(room)
 
+	console.log({ rooms: socket.rooms })
+
 	// Check room was created correctly
 	const roomState = getRoomState(io, room)
 	const groupSocketId = roomState.players[0] || '';
@@ -171,7 +175,7 @@ export const createGame = async (req: Request, res: Response, next: NextFunction
 			},
 		});
 
-		console.log('created game', game)
+		// console.log('created game', game)
 	
 		res.status(200).send({ game })
 	} catch(err) {
@@ -202,7 +206,7 @@ export const joinGame = async (req: Request, res: Response, next: NextFunction) 
 			}
 		})
 
-		console.log('game to join', game)
+		// console.log('game to join', game)
 
 		if (!game) {
 			throw gameNotFound()
@@ -220,7 +224,7 @@ export const joinGame = async (req: Request, res: Response, next: NextFunction) 
 			player = await prisma.player.findUnique({ where: { id: playerId }})
 		}
 
-		console.log('found player', {player, playerId})
+		// console.log('found player', {player, playerId})
 
 		if (!player && socket?.id) {
 			player = await prisma.player.create({
@@ -235,7 +239,7 @@ export const joinGame = async (req: Request, res: Response, next: NextFunction) 
 				}
 			})
 			socket.join(room)
-			console.log('socket joined a room', {socket, room})
+			console.log('socket joined a room', {socket, room, rooms: socket.rooms})
 		}
 		
 		const updatedGame = await prisma.game.findUnique({
@@ -256,80 +260,28 @@ export const joinGame = async (req: Request, res: Response, next: NextFunction) 
 	}
 }
 
-export const startGame = async (req: Request, res: Response, next: NextFunction) => {
-	const { io } = getSocketFromRequest(req);
-	const { gameId } = req.params;
-
-	try {
-
-		const gamePlayers = await prisma.player.findMany({
-			where: { gameId },
-		})
-
-		if (gamePlayers.length < MIN_PLAYERS) {
-			throw notEnoughPlayers();
-		}
-
-		const rounds = await generateRounds();
-		console.log('generated rounds', rounds)
-		const game = await prisma.game.update({
-			where: {
-				id: gameId,
-				isActive: true,
-				isStarted: false,
-				isCompleted: false
-			},
-			data: {
-				roundIndex: 0,
-				isStarted: true,
-				rounds: { createMany: { data: rounds } }
-			},
-			include: { rounds: { 
-				include: { song: { 
-					include: { artist: true } } 
-				} } 
-			}
-		})
-
-		console.log('game updated', game)
-
-		if (!game) {
-			throw gameNotFound()
-		} 
-
-		const players = await findConnectedPlayers(game.id)
-
-		console.log('game started', game)
-
-		console.log(game.gameCode)
-		console.log(getRoomName(game.gameCode))
-
-		io.in(getRoomName(game.gameCode)).emit(SOCKET_EVENTS.START_GAME, {
-			game,
-			players
-		});
-
-		// res.status(200).json({ game })
-	} catch(err) {
-		next(err);
-	}
-}
-
 export const killGame = async (req: Request, res: Response, next: NextFunction) => {
 	const { gameId } = req.params;
 	const { io, socket } = getSocketFromRequest(req);
 	try {
 		const game = await prisma.game.update({ 
 			where: { id: gameId },
-			data: { isActive: false }
+			data: { isActive: false },
+			include: { players: true }
 		})
 		if (!game) {
 			throw gameNotFound()
 		}
+
 		const room = getRoomName(game.gameCode)
 
+		io.to(game.groupSocketId).emit(SOCKET_EVENTS.STOP_CLIP);
 		io.to(room).emit(SOCKET_EVENTS.REFRESH_GAME, gameId)
 
+		// game.players.forEach((player: Player) => {
+		// 	const socket = io.sockets.sockets.get(player.socketId)
+		// 	socket.leave(room)
+		// })
 		socket.leave(room)
 
 		res.sendStatus(204)
@@ -398,7 +350,7 @@ export const roundGuess = async (req: Request, res: Response, next: NextFunction
 		
 		// Sanity check for duplicate round guesses
 		const round = game.rounds[game.roundIndex]
-		console.log({game, round})
+		// console.log({game, round})
 		const currentRoundGuess = round.guesses.some(g => g.playerId === playerId)
 		if (currentRoundGuess) throw playerAlreadyGuessed()
 
@@ -442,7 +394,7 @@ export const roundGuess = async (req: Request, res: Response, next: NextFunction
 			include: { player: true }
 		})
 
-		console.log({updatedPlayers, roundGuesses})
+		// console.log({updatedPlayers, roundGuesses})
 
 		io.to(game.groupSocketId).emit(SOCKET_EVENTS.PLAYERS_UPDATED, updatedPlayers);
 		io.to(game.groupSocketId).emit(SOCKET_EVENTS.ROUND_GUESS, roundGuesses);
