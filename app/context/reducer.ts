@@ -26,8 +26,8 @@ export const initialState = {
   },
 };
 
-type GameState = typeof initialState
-type GameAction = { type: ACTION_TYPE, payload?: any }
+export type GameState = typeof initialState
+export type GameAction = { type: ACTION_TYPE, payload?: any }
 
 const roomReducer = (state: GameState['room'], action: GameAction): GameState['room'] => {
   switch (action.type) {
@@ -138,11 +138,11 @@ const playerReducer = (state: GameState['player'], action: GameAction): GameStat
 
 const screenReducer = (state: GameState['screen'], action: GameAction): GameState['screen'] => {
   switch (action.type) {
-    case ACTION_TYPE.SET_SCREEN:
-      return {
-        ...state,
-        current: action.payload,
-      };
+    // case ACTION_TYPE.SET_SCREEN:
+    //   return {
+    //     ...state,
+    //     current: action.payload,
+    //   };
     default:
       return state;
   }

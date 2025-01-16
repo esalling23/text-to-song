@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, Dispatch } from "react";
 import { socket, SOCKET_EVENTS } from "../../socket";
 import { clearRoom, initGame, setGameRoom, setGameState, setPlayers } from "@/context/actions";
 import { GameUpdateData, PlayerData } from "@/lib/types";
 import { getGame } from "@/lib/api/game";
-import { Dispatch } from "@reduxjs/toolkit";
+import { GameAction } from "@/context/reducer";
 
 const useRefreshGame = (
-	gameDispatch: Dispatch
+	gameDispatch: Dispatch<GameAction>
 ) => {
 	const onGameUpdated = useCallback(({ game, players }: GameUpdateData) => {
 		console.log(`Game Updated -- Room ID: ${game.id}`)

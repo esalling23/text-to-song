@@ -5,9 +5,10 @@ import { getRoundGuesses } from "@/context/selectors"
 import { useGameStateCtx } from "@/context"
 import { useMemo } from "react"
 import { MAX_PLAYERS } from "../../../lib/constants"
+import { PlayerData } from "@/lib/types"
 
 interface PlayersDisplayProps {
-	players: Array<Player>;
+	players: Array<PlayerData>;
 	isEmptyDisplayed: boolean;
 }
 
@@ -19,7 +20,7 @@ const PlayersDisplay = ({
 	const playerGuesses = getRoundGuesses(gameState)
 
 	const playerIcons = useMemo(() => {
-		const nonEmptySlots = players?.map((player: Player) => (
+		const nonEmptySlots = players?.map((player: PlayerData) => (
 			<PlayerIcon
 				key={player.id}
 				name={player.displayName}

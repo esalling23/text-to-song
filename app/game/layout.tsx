@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { GameStateCtxProvider } from '@/context/index.jsx'
+import { GameStateCtxProvider } from '@/context/index'
 import DebugPanel from "../../components/debug/DebugPanel";
 import ActionsBar from "../../components/game/ActionsBar";
 

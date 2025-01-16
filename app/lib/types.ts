@@ -17,6 +17,7 @@ export interface PlayerData {
 	displayName: string;
 	gameCode?: string;
 	totalScore: number;
+  icon: string;
 }
 
 export interface GuessData {

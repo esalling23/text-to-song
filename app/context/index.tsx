@@ -5,23 +5,21 @@ import React, {
   useContext,
   createContext,
   useMemo,
-	Dispatch,
-	SetStateAction,
 } from 'react';
-import { combinedReducer, combinedState, initialState } from './reducer';
+import { combinedReducer, combinedState, GameAction, GameState, initialState } from './reducer';
 import useSockets from '@/hooks/useSockets';
 import { Socket } from 'socket.io-client';
 import { ACTION_TYPE } from './actions';
 
 export const GameStateCtx = createContext({
 	gameState: initialState,
-	gameDispatch: {} as Dispatch<SetStateAction<typeof initialState>>,
+	gameDispatch: {} as React.Dispatch<GameAction>,
 	isConnected: false,
-	transport: {} as Socket<any, any>
+	transport: "None"
 });
 
-export const GameStateCtxProvider = ({ children }) => {
-  const [gameState, dispatch] = useReducer(combinedReducer, combinedState);
+export const GameStateCtxProvider = ({ children }: { children: any }) => {
+  const [gameState, dispatch] = useReducer<React.Reducer<GameState, GameAction>>(combinedReducer, combinedState);
 
 	const { isConnected, transport } = useSockets(dispatch);
 
@@ -49,9 +47,12 @@ export const GameStateCtxProvider = ({ children }) => {
 
 export const useGameStateCtx = () => useContext(GameStateCtx);
 
-export const withGameContext = (WrappedComponent) => () =>
-  (
+export const withGameContext = (WrappedComponent: any) => {
+  const WithContext = () => (
     <GameStateCtxProvider>
       <WrappedComponent />
     </GameStateCtxProvider>
   );
+  return <WithContext />
+}
+  

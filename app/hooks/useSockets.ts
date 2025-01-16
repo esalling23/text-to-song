@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { socket, SOCKET_EVENTS } from "../../socket";
 import { setSocketId } from "@/context/actions";
 import { Dispatch } from "@reduxjs/toolkit";
+import { GameAction } from "@/context/reducer";
 
-const useSockets = (gameDispatch: Dispatch) => {
+const useSockets = (gameDispatch: React.Dispatch<GameAction>) => {
   const [isConnected, setIsConnected] = useState(false);
   const [transport, setTransport] = useState("N/A");
 	const [socketIdState, setSocketIdState] = useState<string|null>(null);

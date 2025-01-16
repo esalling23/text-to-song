@@ -100,7 +100,7 @@ const PlayPage = () => {
 
 					window.localStorage.setItem('playerId', '')
 					window.localStorage.setItem('gameId', '')
-					gameDispatch(setGameRoom(null, null))
+					gameDispatch(setGameRoom('', ''))
 					gameDispatch(setPlayerId(''))
 				})
 		}
@@ -149,7 +149,7 @@ const PlayPage = () => {
 
 	return (
 		<>
-			{isPlaying ? <PlayerRound /> : (
+			{(!isPlaying && playerId && gameCode) ? (
 				<>
 					<NameForm playerId={playerId} />
 					<IconForm
@@ -162,7 +162,7 @@ const PlayPage = () => {
 
 					{startGameOption}
 				</>
-			)}
+			) : <PlayerRound />}
 		</>
 	)
 }

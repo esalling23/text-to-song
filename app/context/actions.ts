@@ -63,7 +63,7 @@ export const setGameStarted = (rounds: RoundData[]): Action => ({
 	payload: rounds
 })
 
-export const setPlayerRoundGuess = (guess: GuessData): Action => ({
+export const setPlayerRoundGuess = (guess: { title: string; artist: string; }): Action => ({
 	type: ACTION_TYPE.SET_PLAYER_ROUND_GUESS,
 	payload: guess
 })
