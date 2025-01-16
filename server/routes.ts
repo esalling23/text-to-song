@@ -1,17 +1,39 @@
-import { NextFunction, Request, Response, Router } from 'express';
-import { v4 as uuidv4 } from 'uuid' 
+import { Router } from 'express';
 
-import prisma from '../prisma'
-import { getSocketFromRequest, SOCKET_EVENTS } from '../socket';
-import { cleanSongData, findConnectedPlayers, generateRoomCode, getRoomName, getRoomState } from './lib';
-import { gameNotFound, gameCreationFailed, gameError, playerNotInGame, playerAlreadyGuessed, notEnoughPlayers } from './customError';
-import { generateRounds } from './gameplay';
-import { Player } from '@prisma/client';
-import { MIN_PLAYERS } from '../lib/constants';
+import createGame from './createGame';
+import startGame from './startGame';
+import getAllGames from './getAllGames';
+import getGame from './getGame';
+import joinGame from './joinGame';
+import killGame from './killGame';
+import roundComplete from './roundComplete';
+import roundGuess from './roundGuess';
+import roundReplayClip from './roundReplayClip';
+import updateGameSocket from './updateGameSocket';
+import updatePlayerName from './updatePlayerName';
+import cleanupGames from './cleanupGames';
+import selectIcon from './selectIcon';
 
+const router = Router();
 
+router.post('/player/update-name', updatePlayerName)
+router.post('/player/icon', selectIcon)
 
-export const updatePlayerName = async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/games/cleanup', cleanupGames)
+
+router.get('/game', getAllGames)
+router.post('/game', createGame)
+router.get('/game/:gameId', getGame)
+router.delete('/game/:gameId', killGame)
+router.patch('/game/:gameId', updateGameSocket)
+
+router.post('/game/join', joinGame)
+router.post('/game/:gameId/start', startGame)
+
+router.post('/game/:gameId/round/replay', roundReplayClip)
+router.post('/game/:gameId/round/guess', roundGuess)
+router.post('/game/:gameId/round/complete', roundComplete)
+
 	const { io } = getSocketFromRequest(req);
 	
 	try {

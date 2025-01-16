@@ -7,7 +7,7 @@ import prisma from './prisma'
 import { SOCKET_EVENTS } from './socket'
 import bodyParser from "body-parser"
 import cookieParser from 'cookie-parser';
-import { updatePlayerName, createGame, joinGame, roundReplayClip, roundGuess, getGame, getAllGames, killGame, updateGameSocket, roundComplete, cleanupGames } from "./server/routes"
+import routes from "./server/routes"
 import startGame from "./server/routes/startGame"
 import requestLogger from "./server/requestLogger"
 import errorHandler from "./server/errorHandler"
