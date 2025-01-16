@@ -5,4 +5,5 @@
 	padding: 20px;
 	position: fixed;
 	text-align: left;
+	z-index: 1000;
 }

@@ -2,23 +2,77 @@
 	width: 100px;
 	height: 100px;
 
-	display: flex;
-	justify-content: center;
-	align-items: center;
 	flex-direction: column;
+}
+
+/* First Row */
+.player-icon:nth-child(1) {
+  grid-row: 1;
+  grid-column: 1;
+  justify-self: right;
+}
+.player-icon:nth-child(2) {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: left;
+}
+
+/* Second Row */
+.player-icon:nth-child(3) {
+  grid-row: 2;
+  grid-column: 1;
+  justify-self: center;
+}
+.player-icon:nth-child(4) {
+  grid-row: 2;
+  grid-column: 2;
+  justify-self: center;
+}
+
+/* Third Row */
+.player-icon:nth-child(5) {
+  grid-row: 3;
+  grid-column: 1;
+  justify-self: start;
+}
+.player-icon:nth-child(6) {
+  grid-row: 3;
+  grid-column: 2;
+  justify-self: end;
+}
+
+/* Fourth Row */
+.player-icon:nth-child(7) {
+  grid-row: 4;
+  grid-column: 1;
+  justify-self: center;
+}
+.player-icon:nth-child(8) {
+  grid-row: 4;
+  grid-column: 2;
+  justify-self: center;
+}
+
+.player-icon.empty {
+	opacity: 0.2;
+}
+
+.player-icon.empty .player-image {
+	border-color: red;
 }
 
 .guess-waiting {
 	opacity: 0.5;
 }
 
-.player-image {
+.player-icon .player-image {
 	border-radius: 50%;
 	width: 60%;
 	height: 60%;
 	background: blue;
 	border-width: 2px;
-	border-color: red;
+	border-color: blue;
+
 }
 
 .player-name {

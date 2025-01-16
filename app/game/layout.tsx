@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { GameStateCtxProvider } from '@/context/index.jsx'
 import DebugPanel from "../../components/debug/DebugPanel";
+import ActionsBar from "../../components/game/ActionsBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,10 +16,10 @@ const GameLayout = ({
   children: React.ReactNode;
 }>) => {
   return (
-    <section className="relative h-full w-full">
+		<section className="relative h-full w-full flex flex-col justify-center">
 			<GameStateCtxProvider>
-				<DebugPanel />
-				<div className="layout-container p-24 flex-center">
+				<ActionsBar />
+				<div className="layout-container flex-center relative pt-12">
 					{children}
 				</div>
 			</GameStateCtxProvider>

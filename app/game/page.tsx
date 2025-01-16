@@ -5,26 +5,23 @@ import { useCallback, useEffect } from "react";
 import { socket, SOCKET_EVENTS } from "../../socket";
 import { useGameStateCtx } from "@/context";
 import { getGameRoom, getIsPlaying, getPlayersInRoom, getSocketId } from '@/context/selectors'
-import { initGame, setGameComplete, setPlayers, setRoundComplete, setRoundGuesses } from "@/context/actions";
-import { GameGuessData, GameUpdateData, PlayerData } from "@/lib/types";
-import { Player } from "@prisma/client";
+import { initGame, setGameComplete, setPlayers, setRoundComplete } from "@/context/actions";
+import { GameUpdateData, PlayerData } from "@/lib/types";
 import { createGame } from "@/lib/api/game";
 import { fetcher } from "@/lib/fetchHelpers";
 import useRefreshGame from "@/hooks/useRefreshGame";
-import PlayerIcon from "../../components/game/PlayerIcon";
 import GroupRound from "../../components/game/GroupRound";
-import KillGameButton from "../../components/KillGameButton";
 import PlayersDisplay from "../../components/game/PlayersDisplay";
 
 const Game = () => {
 	const { gameDispatch, gameState } = useGameStateCtx();
 
-	const { gameId, gameCode } = getGameRoom(gameState);
+	const { gameCode } = getGameRoom(gameState);
 	const socketId = getSocketId(gameState);
 	const playersInRoom = getPlayersInRoom(gameState);
 	const isPlaying = getIsPlaying(gameState);
 
-	const { onGameUpdated, refreshGameData } = useRefreshGame(gameDispatch)
+	const { onGameUpdated } = useRefreshGame(gameDispatch)
 
 	const handleCreateGame = useCallback(() => {
 		createGame(socketId)
@@ -80,6 +77,10 @@ const Game = () => {
 		socket.on(SOCKET_EVENTS.COMPLETE_ROUND, onRoundComplete)
 		socket.on(SOCKET_EVENTS.COMPLETE_GAME, onGameComplete)
 
+		socket.onAny((eventName, ...args) => {
+			console.log('heard', { eventName, ...args })
+		})
+
     return () => {
 			socket.off(SOCKET_EVENTS.PLAYER_JOINED_GAME, onPlayerUpdate);
 			socket.off(SOCKET_EVENTS.PLAYERS_UPDATED, onPlayerUpdate)
@@ -88,35 +89,39 @@ const Game = () => {
 			socket.off(SOCKET_EVENTS.COMPLETE_GAME, onGameComplete)
 
     };
-  }, [refreshGameData, socketId, gameDispatch]);
+  }, [socketId, gameDispatch]);
 
 	const onTalkToPlayers = () => {
 
 	}
 
+	const joinScreenContent = (
+		<>
+			<h2 className="text-center">Join With Code:
+				<br/>
+				<span className="font-black">{ gameCode }</span>
+			</h2>
+			<p>{playersInRoom?.length > 0 ? 
+				`Players Joined: ${playersInRoom.length}` : 
+				'Waiting For Players...' }</p>
+		</>
+	)
+
   return (
-    <div>
+    <>
 			{!gameCode 
 				&& <button onClick={handleCreateGame}>Create Game</button>}
 
 			{gameCode && (
-				<>
-					<p>Room: { gameCode }</p>
-					<p>{playersInRoom?.length > 0 ? 
-						`Players Joined: ${playersInRoom.length}` : 
-						'Waiting For Players...' }</p>
-					<PlayersDisplay players={playersInRoom} />
-
-					{isPlaying && <GroupRound />}
-		
-					<KillGameButton
-						gameId={gameId}
-						socketId={socketId}
-						onSuccess={() => refreshGameData(gameId)}
+				<div className="w-full h-full flex flex-center relative pt-24 px-12">
+					<PlayersDisplay 
+						players={playersInRoom} 
+						isEmptyDisplayed={!isPlaying} 
 					/>
-				</>
+					{isPlaying ? <GroupRound /> : joinScreenContent}
+				</div>
 			)}
-    </div>
+    </>
   );
 }
 

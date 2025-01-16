@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "../components/Navigation";
 import Head from "next/head";
+import classNames from "classnames";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,9 +22,12 @@ export default function RootLayout({
 			<Head>
         <title></title>
       </Head>
-      <body className={inter.className}>
+      <body className={classNames(
+				inter.className, 
+				"h-screen w-screen flex flex-col"
+			)}>
 				<Navigation />
-				<main className="h-screen w-screen">
+				<main className="grow">
 					{children}
 				</main>
 			</body>

@@ -15,7 +15,7 @@ const DebugPanel = ({
 		transport,
 	} = useGameStateCtx();
 
-	const { gameId } = getGameRoom(gameState);
+	const { gameId, gameCode } = getGameRoom(gameState);
 	const playerId = getPlayerId(gameState);
 	const socketId = getSocketId(gameState);
 
@@ -40,7 +40,8 @@ const DebugPanel = ({
 
 				<hr />
 
-				<p>Room: {gameId || 'null'}</p>
+				<p>Room Id: {gameId || 'null'}</p>
+				<p>Code: {gameCode || 'null'}</p>
 				<p>Player ID: {playerId || 'null'}</p>
 				<p>Socket ID: {socketId || 'null'}</p>
 			</div>
