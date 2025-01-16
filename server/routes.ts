@@ -1,18 +1,18 @@
 import { Router } from 'express';
 
-import createGame from './createGame';
-import startGame from './startGame';
-import getAllGames from './getAllGames';
-import getGame from './getGame';
-import joinGame from './joinGame';
-import killGame from './killGame';
-import roundComplete from './roundComplete';
-import roundGuess from './roundGuess';
-import roundReplayClip from './roundReplayClip';
-import updateGameSocket from './updateGameSocket';
-import updatePlayerName from './updatePlayerName';
-import cleanupGames from './cleanupGames';
-import selectIcon from './selectIcon';
+import createGame from './routes/createGame';
+import startGame from './routes/startGame';
+import getAllGames from './routes/getAllGames';
+import getGame from './routes/getGame';
+import joinGame from './routes/joinGame';
+import killGame from './routes/killGame';
+import roundComplete from './routes/roundComplete';
+import roundGuess from './routes/roundGuess';
+import roundReplayClip from './routes/roundReplayClip';
+import updateGameSocket from './routes/updateGameSocket';
+import updatePlayerName from './routes/updatePlayerName';
+import cleanupGames from './routes/cleanupGames';
+import selectIcon from './routes/selectIcon';
 
 const router = Router();
 
