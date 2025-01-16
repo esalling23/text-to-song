@@ -3,9 +3,8 @@
 
 import { useGameStateCtx } from "@/context";
 import { useCallback, useEffect, useMemo } from "react";
-import { getCurrentRound, getGameRoom, getIsPlaying, getPlayerId, getPlayerRoundGuess, getPlayersInRoom, getSocketId } from "@/context/selectors";
-import { clearRoom, initGame, setGameComplete, setGameRoom, setGameStarted, setGameState, setPlayerId, setPlayerName, setPlayerRoundGuess, setPlayers, setRoundComplete } from "@/context/actions";
-import { updatePlayer } from "@/lib/api/player";
+import { getGameRoom, getIsPlaying, getPlayerId, getPlayersInRoom, getSocketId } from "@/context/selectors";
+import { clearRoom, initGame, setGameComplete, setGameRoom, setGameState, setPlayerId, setPlayerName, setPlayerRoundGuess, setPlayers, setRoundComplete } from "@/context/actions";
 import { getGame, joinGame, startGame } from "@/lib/api/game";
 import PlayerRound from "../../../components/game/PlayerRound";
 import useRefreshGame from "@/hooks/useRefreshGame";
@@ -20,7 +19,7 @@ import JoinForm from "../../../components/game/PlayerForms/JoinForm";
 const PlayPage = () => {
 	const { gameDispatch, gameState } = useGameStateCtx();
 
-	const { gameId } = getGameRoom(gameState);
+	const { gameId, gameCode } = getGameRoom(gameState);
 	const players = getPlayersInRoom(gameState);
 	const playerId = getPlayerId(gameState);
 	const socketId = getSocketId(gameState);
@@ -37,14 +36,14 @@ const PlayPage = () => {
 				window.localStorage.setItem('playerId', player.id);
 				window.localStorage.setItem('gameId', player.gameId);
 
-				gameDispatch(setGameRoom(player.gameId))
+				gameDispatch(setGameRoom(player.gameId, gameCode))
 				gameDispatch(setPlayerId(player.id))
 				gameDispatch(setPlayerName(player.displayName))
 			})
 			.catch(console.error);
 	}, [gameDispatch, socketId, playerId])
 
-	const onStartGame = () => {
+	const onStartGame = useCallback(() => {
 		// to do - confirmation popup?
 		startGame(gameId)
 			.then((data: any) => {
@@ -53,7 +52,7 @@ const PlayPage = () => {
 				// gameDispatch(setGameStarted(data))
 			})
 			.catch(console.error)
-	}
+	}, [gameId])
 
 	useEffect(() => {
 		if (socketId && playerId) socket.emit(SOCKET_EVENTS.PLAYER_JOINED_GAME, playerId)
@@ -88,7 +87,7 @@ const PlayPage = () => {
 						window.localStorage.setItem('gameId', '')
 						gameDispatch(clearRoom())
 					} else {
-						gameDispatch(setGameRoom(gId))
+						gameDispatch(setGameRoom(gId, res.data.game.gameCode))
 						gameDispatch(setPlayerId(pId))
 						if (res.data.game.isStarted) {
 							gameDispatch(setGameState(res.data.game))
@@ -101,7 +100,7 @@ const PlayPage = () => {
 
 					window.localStorage.setItem('playerId', '')
 					window.localStorage.setItem('gameId', '')
-					gameDispatch(setGameRoom(''))
+					gameDispatch(setGameRoom(null, null))
 					gameDispatch(setPlayerId(''))
 				})
 		}
@@ -111,6 +110,11 @@ const PlayPage = () => {
 		socket.on(SOCKET_EVENTS.COMPLETE_ROUND, onRoundComplete)
 		socket.on(SOCKET_EVENTS.COMPLETE_GAME, onGameComplete)
 
+		// Debugging only - remove from production
+		socket.onAny((eventName, ...args) => {
+			console.log('heard', { eventName, ...args })
+		})
+		
 		return () => {
 			socket.off(SOCKET_EVENTS.PLAYER_JOINED_GAME, onPlayerUpdate)
 			socket.off(SOCKET_EVENTS.START_GAME, onGameStart)
@@ -129,7 +133,7 @@ const PlayPage = () => {
 		} else {
 			return ''
 		}
-	}, [players])
+	}, [players, onStartGame])
 
 	if (!socketId) {
 		return <p>Loading...</p>
