@@ -1,31 +1,32 @@
+import { initialState } from './reducer';
+import { GuessData, LyricBlock, PlayerData, RoundData, SearchResult } from '@/lib/types';
+
+type GameState = typeof initialState
+
 // Screen
-export const getCurrentScreen = (state) => state.screen.current;
+export const getCurrentScreen = (state: GameState) => state.screen.current;
 
 // Room 
-export const getGameRoom = (state) => ({ 
+export const getGameRoom = (state: GameState) => ({ 
 	gameId: state.room.gameId, 
 	gameCode: state.room.gameCode
 });
-export const getSocketId = (state) => state.room.socketId;
-export const getPlayersInRoom = (state) => state.room.playersInRoom;
+export const getSocketId = (state: GameState) => state.room.socketId;
+export const getPlayersInRoom = (state: GameState): PlayerData[] => state.room.playersInRoom;
 
 // Player
-export const getPlayerId = (state) => state.player.id;
-export const getPlayerName = (state) => state.player.displayName;
+export const getPlayerId = (state: GameState) => state.player.id;
+export const getPlayerName = (state: GameState) => state.player.displayName;
 
 // Gameplay
-export const getIsPlaying = (state) => state.gameplay.isPlaying
-export const getCurrentRoundIndex = (state) => state.gameplay.roundIndex
-export const getCurrentRound = (state) => state.gameplay.rounds[getCurrentRoundIndex(state)]
-export const getRoundSong = (state) => getCurrentRound(state).song
-export const getRoundGuesses = (state) => state.gameplay.roundGuesses
-export const getGuessCount = (state) => getRoundGuesses(state)?.length
-export const getPlayerRoundGuess = state => {
-	if (!state.player.roundGuess?.title || !state.player.roundGuess?.artist) return null;
-	return state.player.roundGuess
-}
-export const getSongLyrics = (state) => {
+export const getIsPlaying = (state: GameState) => state.gameplay.isPlaying
+export const getCurrentRoundIndex = (state: GameState) => state.gameplay.roundIndex
+export const getCurrentRound = (state: GameState): RoundData | undefined => state.gameplay.rounds[getCurrentRoundIndex(state)]
+export const getRoundSong = (state: GameState): SearchResult | undefined => getCurrentRound(state)?.song
+export const getRoundGuesses = (state: GameState): GuessData[] => state.gameplay.roundGuesses
+export const getGuessCount = (state: GameState) => getRoundGuesses(state).length
+export const getPlayerRoundGuess = (state: GameState): GuessData | null => state.player.roundGuess
+export const getSongLyrics = (state: GameState): LyricBlock | undefined => {
 	const round = getCurrentRound(state)
-	console.log(round)
 	return round?.song?.lyricBlocks[round.blockIndex];
 }

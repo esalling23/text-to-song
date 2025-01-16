@@ -1,36 +1,35 @@
 import combineReducers from 'react-combine-reducers';
 import { ACTION_TYPE } from './actions';
+import { GameData, GuessData, PlayerData, RoundData } from '@/lib/types';
 
 export const initialState = {
 	room: {
-		socketId: null,
+		socketId: null as string | null,
 		isConnected: false,
-		gameId: null,
-		gameCode: null,
-		playersInRoom: [],
+		gameId: null as string | null,
+		gameCode: null as string | null,
+		playersInRoom: [] as PlayerData[],
 	},
 	gameplay: {
 		isPlaying: false,
-		rounds: [],
-		roundGuesses: [],
+		rounds: [] as RoundData[],
+		roundGuesses: [] as GuessData[],
 		roundIndex: 0,
-		guessCount: 0,
-		scores: [],
 	},
 	player: {
-		id: null,
-		displayName: null,
-		roundGuess: {
-			title: null,
-			artist: null
-		},
+		id: null as string | null,
+		displayName: null as string | null,
+		roundGuess: null as GuessData | null,
 	},
   screen: {
-    current: null,
+    current: null as string | null,
   },
 };
 
-const roomReducer = (state, action) => {
+type GameState = typeof initialState
+type GameAction = { type: ACTION_TYPE, payload?: any }
+
+const roomReducer = (state: GameState['room'], action: GameAction): GameState['room'] => {
   switch (action.type) {
     case ACTION_TYPE.SET_SOCKET: {
       return {
@@ -39,12 +38,7 @@ const roomReducer = (state, action) => {
       };
 		}
     case ACTION_TYPE.CLEAR_ROOM: {
-      return {
-        ...state,
-        gameId: null,
-				gameCode: null,
-				isConnected: false
-      };
+      return initialState.room
 		}
     case ACTION_TYPE.SET_ROOM: {
       return {
@@ -55,12 +49,7 @@ const roomReducer = (state, action) => {
       };
 		}
 		case ACTION_TYPE.COMPLETE_GAME:
-			return {
-				...state,
-				gameId: null,
-				gameCode: null,
-				playersInRoom: []
-			}
+			return initialState.room
     case ACTION_TYPE.SET_PLAYERS: {
       return {
         ...state,
@@ -72,37 +61,37 @@ const roomReducer = (state, action) => {
   }
 };
 
-const gameplayReducer = (state, { type, payload }) => {
-  switch (type) {
+const gameplayReducer = (state: GameState['gameplay'], action: GameAction): GameState['gameplay'] => {
+  switch (action.type) {
 		case ACTION_TYPE.COMPLETE_GAME:
 		case ACTION_TYPE.CLEAR_ROOM: {
 			return initialState.gameplay
 		}
     case ACTION_TYPE.SET_GAME: {
+			const currentRound = action.payload.rounds[action.payload.roundIndex]
       return {
         ...state,
-				rounds: payload.rounds,
-				roundsIndex: payload.roundIndex,
-				isPlaying: payload.isStarted && !payload.isCompleted,
-				roundGuesses: payload.rounds[payload.roundIndex]?.guesses
+				rounds: action.payload.rounds,
+				roundIndex: action.payload.roundIndex,
+				isPlaying: action.payload.isStarted && !action.payload.isCompleted,
+				roundGuesses: currentRound?.guesses || []
       };
 		}
 		case ACTION_TYPE.SET_ROUND_GUESSES:
       return {
         ...state,
-        roundGuesses: payload
+        roundGuesses: action.payload
       };
 		case ACTION_TYPE.COMPLETE_ROUND:
       return {
         ...state,
         roundIndex: state.roundIndex + 1,
 				roundGuesses: [],
-				guessCount: 0,
       };
 		case ACTION_TYPE.INIT_GAME: {
 			return {
 				...state,
-				rounds: payload,
+				rounds: action.payload,
 				roundIndex: 0,
 				isPlaying: true,
 			}
@@ -112,7 +101,7 @@ const gameplayReducer = (state, { type, payload }) => {
   }
 };
 
-const playerReducer = (state, action) => {
+const playerReducer = (state: GameState['player'], action: GameAction): GameState['player'] => {
   switch (action.type) {
 		case ACTION_TYPE.CLEAR_ROOM: {
 			return initialState.player
@@ -140,17 +129,14 @@ const playerReducer = (state, action) => {
     case ACTION_TYPE.SET_PLAYER_ROUND_GUESS:
       return {
         ...state,
-        roundGuess: {
-					title: action.payload.title,
-					artist: action.payload.artist
-				}
+        roundGuess: action.payload
       };
     default:
       return state;
   }
 };
 
-const screenReducer = (state, action) => {
+const screenReducer = (state: GameState['screen'], action: GameAction): GameState['screen'] => {
   switch (action.type) {
     case ACTION_TYPE.SET_SCREEN:
       return {
