@@ -127,12 +127,16 @@ nextApp.prepare().then(() => {
 			console.log('games with disconnected players', gamesWithDisconnectedPlayers)
 
 			for(const game of gamesWithDisconnectedPlayers) {
-				io.to(game.groupSocketId).emit(SOCKET_EVENTS.REFRESH_GAME, game.id);
+				const updatedGame = await prisma.game.findUniqueOrThrow({
+					where: { id: game.id },
+					include: { players: true }
+				})
+				io.to(game.groupSocketId).emit(SOCKET_EVENTS.REFRESH_GAME, updatedGame);
 			}
    });
 	})
 
-	app.use(appRoutes)
+	app.use('/api', appRoutes)
 	
 	app.all('*', (req: any, res: any) => handler(req, res))
 	
