@@ -118,6 +118,7 @@ model Player {
 	socketId		String?
 
 	displayName String @default("Anon")
+	icon				String @default("")
 
 	game   			Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 	gameId 			String
