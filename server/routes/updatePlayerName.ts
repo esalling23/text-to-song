@@ -30,10 +30,10 @@ const updatePlayerName = async (req: Request, res: Response, next: NextFunction)
 
 		
 		if (!game) {
-			throw gameNotFound()
+	    return next(gameNotFound())
 		}
 	
-		io.to(game.groupSocketId).emit(SOCKET_EVENTS.PLAYERS_UPDATED, game.players);
+		io.to(game?.groupSocketId).emit(SOCKET_EVENTS.PLAYERS_UPDATED, game?.players);
 
 		res.status(200).send({ success: true,  player })
 	} catch(err) {

@@ -12,7 +12,7 @@ export const findGameByCode = async (gameCode: string) => await prisma.game.find
 	},
 	include
 })
-export const findGameById = async (id: string) => await prisma.game.findUnique({
+export const findGameById = async (id: string) => await prisma.game.findUniqueOrThrow({
 	where: { id },
 	include
 })

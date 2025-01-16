@@ -9,7 +9,7 @@ const selectIcon = async (req: Request, res: Response, next: NextFunction) => {
 	const { gameCode, icon, playerId } = req.body;
 
 	if (!icon)
-		throw gameError('Missing Icon')
+		return next(gameError('Missing Icon'))
 
 	try {
 		const playerWithIcon = await prisma.player.findFirst({
@@ -18,7 +18,7 @@ const selectIcon = async (req: Request, res: Response, next: NextFunction) => {
 			}
 		}) 
 		if (playerWithIcon)
-			throw gameError('Icon in use')
+			return next(gameError('Icon in use'))
 
 		// update player icon
 		await prisma.player.update({

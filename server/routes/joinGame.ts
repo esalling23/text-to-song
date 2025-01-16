@@ -31,19 +31,16 @@ const joinGame = async (req: Request, res: Response, next: NextFunction) => {
 		// console.log('game to join', game)
 
 		if (!game) {
-			throw gameNotFound()
-			return;
+			return next(gameNotFound())
 		} else if (!game.isActive) {
-			throw gameError('Game Not Active')
-			return;
+			return next(gameError('Game Not Active'))
 		} else if (game.isCompleted) {
-			throw gameError('Cannot Join Completed Game')
-			return;
+			return next(gameError('Cannot Join Completed Game'))
 		}
 
 		let player;
 		if (playerId) {
-			player = await prisma.player.findUnique({ where: { id: playerId }})
+			player = await prisma.player.findUniqueOrThrow({ where: { id: playerId }})
 		}
 
 		// console.log('found player', {player, playerId})
@@ -64,7 +61,7 @@ const joinGame = async (req: Request, res: Response, next: NextFunction) => {
 			console.log('socket joined a room', {socket, room, rooms: socket.rooms})
 		}
 		
-		const updatedGame = await prisma.game.findUnique({
+		const updatedGame = await prisma.game.findUniqueOrThrow({
 			where: {
 				id: game.id
 			},

@@ -19,7 +19,7 @@ export async function updatePlayer(data: PlayerData) {
 }
 
 export async function updateGameData(id: string) {
-	const game = await prisma.game.findUnique({ where: { id } })
+	const game = await prisma.game.findUniqueOrThrow({ where: { id } })
 
 	if (!game) {
 		return { success: false, error: 'No game found' }

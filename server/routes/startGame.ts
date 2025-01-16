@@ -17,7 +17,7 @@ const startGame = async (req: Request, res: Response, next: NextFunction) => {
 		})
 
 		if (gamePlayers.length < MIN_PLAYERS) {
-			throw notEnoughPlayers();
+			return next(notEnoughPlayers());
 		}
 
 		const rounds = await generateRounds();
@@ -44,7 +44,7 @@ const startGame = async (req: Request, res: Response, next: NextFunction) => {
 		// console.log('game updated', game)
 
 		if (!game) {
-			throw gameNotFound()
+			return next(gameNotFound())
 		} 
 
 		const players = await findConnectedPlayers(game.id)

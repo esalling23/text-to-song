@@ -7,10 +7,7 @@ import { findConnectedPlayers, getRoomName } from '../lib';
 const updateGameSocket = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { io, socket } = getSocketFromRequest(req)
-		// console.log('updating game socket from socket: ', { socket })
 		const gameId = req.params.gameId;
-		// console.log('found socket?? ', !!socket)
-		// if (!socket) res.send({ message: 'empty socket' });
 
 		const game = await prisma.game.update({ 
 			where: { id: gameId },
@@ -18,7 +15,7 @@ const updateGameSocket = async (req: Request, res: Response, next: NextFunction)
 		})
 
 		if (!game) {
-			throw gameNotFound()
+			return next(gameNotFound())
 		}
 
 		// console.log('game socket updated', game)

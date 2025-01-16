@@ -3,23 +3,22 @@ import prisma from '../../prisma'
 import { getSocketFromRequest } from '../../socket';
 
 const cleanupGames = async (req: Request, res: Response, next: NextFunction) => {
-	const { io } = getSocketFromRequest(req);
+  const { io } = getSocketFromRequest(req);
 
-	
-	const allGames = await prisma.game.findMany()
+  const allGames = await prisma.game.findMany()
 
-	const gamesToRemove = allGames.filter(game => {
-		// REturn if game is NOT connected
-        return !io.sockets.adapter.rooms.get(game.groupSocketId)
-    }).map(game => game.id); // Use io.sockets.adapter.rooms
+  const gamesToRemove = allGames.filter(game => {
+    // REturn if game is NOT connected
+    return !io.sockets.adapter.rooms.get(game.groupSocketId)
+  }).map(game => game.id);
 
-    await prisma.game.deleteMany({
-		where: { id: { in: gamesToRemove } }
-	})
+  await prisma.game.deleteMany({
+    where: { id: { in: gamesToRemove } }
+  })
 
-	// console.log({ gamesRemoved })
+  // console.log({ gamesRemoved })
 
-	res.status(201).send({ message: 'success' })
+  res.status(201).send({ message: 'success' })
 }
 
 

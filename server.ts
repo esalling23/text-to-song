@@ -43,7 +43,7 @@ nextApp.prepare().then(() => {
 		if (gameIdFromCookie) {
 			// Attempt to rejoin the game
 			try {
-				const game = await prisma.game.findUnique({ where: { id: gameIdFromCookie } });
+				const game = await prisma.game.findUniqueOrThrow({ where: { id: gameIdFromCookie } });
 				if (game && !game.isCompleted) {
 					// Game is active, rejoin the user
 					socket.join(game.groupSocketId);
@@ -67,7 +67,7 @@ nextApp.prepare().then(() => {
 		socket.emit(SOCKET_EVENTS.CONNECTED, socket.id);
 
 		socket.on(SOCKET_EVENTS.STOP_CLIP, async (gameId: string) => {
-			const game = await prisma.game.findUnique({ where: { id: gameId }})
+			const game = await prisma.game.findUniqueOrThrow({ where: { id: gameId }})
 			if (!game) {
 				socket.emit(SOCKET_EVENTS.ERROR, gameNotFound())
 				return;
