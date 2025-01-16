@@ -3,9 +3,7 @@ import prisma from '../../prisma'
 import { getSocketFromRequest, SOCKET_EVENTS } from '../../socket';
 import { gameNotFound } from '../customError';
 
-
-
-export const roundReplayClip = async (req: Request, res: Response, next: NextFunction) => {
+const roundReplayClip = async (req: Request, res: Response, next: NextFunction) => {
 	const { io, socket } = getSocketFromRequest(req);
 	const { gameId } = req.params;
 

@@ -2,8 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import prisma from '../../prisma'
 import { getSocketFromRequest } from '../../socket';
 
-
-export const cleanupGames = async (req: Request, res: Response, next: NextFunction) => {
+const cleanupGames = async (req: Request, res: Response, next: NextFunction) => {
 	const { io } = getSocketFromRequest(req);
 
 	

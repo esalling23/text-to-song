@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
 import prisma from '../../prisma'
-import { NextFunction, Request, Response } from "express";
 import { getSocketFromRequest, SOCKET_EVENTS } from "../../socket";
 import { gameNotFound, notEnoughPlayers } from '../customError';
 import { MIN_PLAYERS } from '../../lib/constants';

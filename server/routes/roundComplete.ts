@@ -4,9 +4,7 @@ import { getSocketFromRequest, SOCKET_EVENTS } from '../../socket';
 import { gameNotFound } from '../customError';
 import { getRoomName } from '../lib';
 
-
-
-export const roundComplete = async (req: Request, res: Response, next: NextFunction) => {
+const roundComplete = async (req: Request, res: Response, next: NextFunction) => {
 	const { io, socket } = getSocketFromRequest(req);
 	const { gameId } = req.params;
 	const { title, artist, socketId, playerId } = req.body;
@@ -53,7 +51,7 @@ export const roundComplete = async (req: Request, res: Response, next: NextFunct
 			where: {
 				id: game.id,
 			},
-			 {
+			data: {
 				roundIndex: game.roundIndex + 1,
 			},
 			...include

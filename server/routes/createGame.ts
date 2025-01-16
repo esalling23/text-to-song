@@ -1,14 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid' 
-
 import prisma from '../../prisma'
-import { getSocketFromRequest, SOCKET_EVENTS } from '../../socket';
+import { getSocketFromRequest } from '../../socket';
 import { gameCreationFailed } from '../customError';
 import { generateRoomCode, getRoomName, getRoomState } from '../lib';
 
-
-
-export const createGame = async (req: Request, res: Response, next: NextFunction) => {
+const createGame = async (req: Request, res: Response, next: NextFunction) => {
 	// Generate unique game code
 	const games = await prisma.game.findMany({ select: { gameCode: true }})
 	const existingGameCodes = games.map(g => g.gameCode);
@@ -37,7 +33,7 @@ export const createGame = async (req: Request, res: Response, next: NextFunction
 		// Create game db object
 		// groupSocketId will be set to the incoming client connection
 		const game = await prisma.game.create({
-			 {
+			data: {
 				isActive: true,
 				gameCode: roomCode,
 				groupSocketId  // will be the only player

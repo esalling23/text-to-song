@@ -5,9 +5,7 @@ import { getSocketFromRequest, SOCKET_EVENTS } from '../../socket';
 import { findConnectedPlayers, getRoomName } from '../lib';
 import { gameError, gameNotFound } from '../customError';
 
-
-
-export const joinGame = async (req: Request, res: Response, next: NextFunction) => {
+const joinGame = async (req: Request, res: Response, next: NextFunction) => {
 	const { io, socket } = getSocketFromRequest(req);
 	const { playerId, gameCode } = req.body;
 	const room = getRoomName(gameCode)
@@ -52,7 +50,7 @@ export const joinGame = async (req: Request, res: Response, next: NextFunction) 
 
 		if (!player && socket?.id) {
 			player = await prisma.player.create({
-				 {
+				data: {
 					socketId: socket.id,
 					displayName: 'Anon',
 					game: {

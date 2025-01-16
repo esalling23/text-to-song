@@ -4,9 +4,7 @@ import { getSocketFromRequest, SOCKET_EVENTS } from '../../socket';
 import { gameNotFound } from '../customError';
 import { findConnectedPlayers, getRoomName } from '../lib';
 
-
-
-export const updateGameSocket = async (req: Request, res: Response, next: NextFunction) => {
+const updateGameSocket = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { io, socket } = getSocketFromRequest(req)
 		// console.log('updating game socket from socket: ', { socket })
@@ -16,7 +14,7 @@ export const updateGameSocket = async (req: Request, res: Response, next: NextFu
 
 		const game = await prisma.game.update({ 
 			where: { id: gameId },
-			 { groupSocketId: socket?.id }
+			data: { groupSocketId: socket?.id }
 		})
 
 		if (!game) {

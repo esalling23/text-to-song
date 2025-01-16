@@ -5,15 +5,13 @@ import { gameNotFound } from '../customError';
 import { getRoomName } from '../lib';
 import { Player } from '@prisma/client';
 
-
-
-export const killGame = async (req: Request, res: Response, next: NextFunction) => {
+const killGame = async (req: Request, res: Response, next: NextFunction) => {
 	const { gameId } = req.params;
 	const { io, socket } = getSocketFromRequest(req);
 	try {
 		const game = await prisma.game.update({ 
 			where: { id: gameId },
-			 { isActive: false },
+			data: { isActive: false },
 			include: { players: true }
 		})
 		if (!game) {

@@ -7,14 +7,12 @@ import prisma from './prisma'
 import { SOCKET_EVENTS } from './socket'
 import bodyParser from "body-parser"
 import cookieParser from 'cookie-parser';
-import routes from "./server/routes"
-import startGame from "./server/routes/startGame"
 import requestLogger from "./server/requestLogger"
 import errorHandler from "./server/errorHandler"
 import { gameNotFound } from "./server/customError"
 import { findConnectedPlayers, getRoomName } from "./server/lib"
 import { IconEvent } from "./components/game/PlayerForms/IconForm/IconForm"
-import selectIcon from "./server/routes/selectIcon"
+import appRoutes from "./server/routes"
 
 const dev = process.env.NODE_ENV !== "production"
 const hostname = "localhost"
@@ -134,26 +132,7 @@ nextApp.prepare().then(() => {
    });
 	})
 
-	app.post('/api/player/update-name', updatePlayerName)
-	app.post('/api/player/icon', selectIcon)
-
-	app.patch('/api/games/cleanup', cleanupGames)
-	
-	app.get('/api/game/:gameId', getGame)
-	app.delete('/api/game/:gameId', killGame)
-	// Only for group socket updates
-	app.patch('/api/game/:gameId', updateGameSocket)
-
-	app.get('/api/game', getAllGames)
-	app.post('/api/game', createGame)
-
-	app.post('/api/game/join', joinGame)
-	app.post('/api/game/:gameId/start', startGame)
-
-	app.post('/api/game/:gameId/round/replay', roundReplayClip)
-	app.post('/api/game/:gameId/round/guess', roundGuess)
-
-	app.post('/api/game/:gameId/round/complete', roundComplete)
+	app.use(appRoutes)
 	
 	app.all('*', (req: any, res: any) => handler(req, res))
 	

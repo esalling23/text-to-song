@@ -3,9 +3,7 @@ import prisma from '../../prisma'
 import { gameNotFound } from '../customError';
 import { findConnectedPlayers } from '../lib';
 
-
-
-export const getGame = async (req: Request, res: Response, next: NextFunction) => {
+const getGame = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const gameId = req.params.gameId;
 		const game = await prisma.game.findUnique({ 

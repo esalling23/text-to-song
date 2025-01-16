@@ -4,9 +4,7 @@ import { getSocketFromRequest, SOCKET_EVENTS } from '../../socket';
 import { cleanSongData } from '../lib';
 import { gameNotFound, playerAlreadyGuessed, playerNotInGame } from '../customError';
 
-
-
-export const roundGuess = async (req: Request, res: Response, next: NextFunction) => {
+const roundGuess = async (req: Request, res: Response, next: NextFunction) => {
 	const { io, socket } = getSocketFromRequest(req);
 	const { gameId } = req.params;
 	const { title, artist, socketId, playerId } = req.body;
@@ -49,7 +47,7 @@ export const roundGuess = async (req: Request, res: Response, next: NextFunction
 		const isCorrectTitle = cleanSongData(title) === cleanSongData(round.song.title)
 		const isCorrectArtist = cleanSongData(artist) === cleanSongData(round.song.artist.name)
 		const guess = await prisma.guess.create({
-			 {
+			data: {
 				title,
 				artist,
 				player: { connect: { id: player.id } },
@@ -65,7 +63,7 @@ export const roundGuess = async (req: Request, res: Response, next: NextFunction
 			where: {
 				id: playerId
 			},
-			 {
+			data: {
 				totalScore: player.totalScore + guess.score
 			}
 		})

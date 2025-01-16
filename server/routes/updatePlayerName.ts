@@ -3,9 +3,7 @@ import prisma from '../../prisma'
 import { getSocketFromRequest, SOCKET_EVENTS } from '../../socket';
 import { gameNotFound } from '../customError';
 
-
-
-export const updatePlayerName = async (req: Request, res: Response, next: NextFunction) => {
+const updatePlayerName = async (req: Request, res: Response, next: NextFunction) => {
 	const { io } = getSocketFromRequest(req);
 	
 	try {
@@ -13,7 +11,7 @@ export const updatePlayerName = async (req: Request, res: Response, next: NextFu
 			where: {
 				id: req.body.playerId
 			},
-			 {
+			data: {
 				displayName: req.body.name
 			}
 		});
