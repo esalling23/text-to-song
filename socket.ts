@@ -19,7 +19,11 @@ export const SOCKET_EVENTS = {
 	REPLAY_CLIP: 'replayClip',
 	STOP_CLIP: 'stopClip',
 	COMPLETE_ROUND: 'completRound',
-	COMPLETE_GAME: 'completeGame'
+	COMPLETE_GAME: 'completeGame',
+
+	// Player Icons
+	SELECT_ICON: 'selectIcon',
+	DESELECT_ICON: 'deselectIcon'
 }
 
 export const getSocketFromRequest = (req: Request) => {
